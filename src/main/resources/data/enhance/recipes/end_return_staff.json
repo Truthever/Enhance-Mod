@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "  B",
+    " CB",
+    "C  "
+  ],
+  "key": {
+    "B": {
+      "item": "enhance:enhance_stone"
+    },
+    "C": {
+      "item": "minecraft:diamond"
+    }
+  },
+  "result": {
+    "item": "enhance:end_return_staff",
+    "count": 1
+  },
+  "group": "enhance"
+}

@@ -1,0 +1,13 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "ingredients": [
+    {
+      "item": "enhance:enhance_block"
+    }
+  ],
+  "result": {
+    "item": "enhance:enhance_stone",
+    "count": 9
+  },
+  "group": "enhance"
+}

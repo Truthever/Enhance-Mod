@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:models/armor/generic_armor_layer_2",
+  "textures": {
+    "layer0": "enhance:textures/models/armor/enhance_layer_2"
+  }
+}

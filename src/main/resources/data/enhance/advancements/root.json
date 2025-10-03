@@ -1,0 +1,27 @@
+{
+  "display": {
+    "icon": {
+      "item": "enhance:enhance_stone",
+      "nbt": "{Enchantments:[{id:\"minecraft:unbreaking\",lvl:1}]}"
+    },
+    "title": {
+      "translate": "advancements.enhance.root.title"
+    },
+    "description": {
+      "translate": "advancements.enhance.root.description"
+    },
+    "background": "minecraft:textures/gui/advancements/backgrounds/stone.png",
+    "frame": "task",
+    "show_toast": false,
+    "announce_to_chat": false,
+    "hidden": false
+  },
+  "criteria": {
+    "always_trigger": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "requirements": [
+    ["always_trigger"]
+  ]
+}

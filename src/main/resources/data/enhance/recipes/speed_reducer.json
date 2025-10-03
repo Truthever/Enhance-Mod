@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    " E ",
+    "EGE",
+    " E "
+  ],
+  "key": {
+    "E": {
+      "item": "enhance:enhance_stone"
+    },
+    "G": {
+      "item": "minecraft:emerald_block"
+    }
+  },
+  "result": {
+    "item": "enhance:speed_reducer",
+    "count": 1
+  },
+  "group": "enhance_blocks"
+}

@@ -1,0 +1,8 @@
+{
+  "parent": "block/cube_all",
+  "textures": {
+    "all": "enhance:block/speed_reducer_side",
+    "up": "enhance:block/speed_reducer_top",
+    "down": "enhance:block/speed_reducer_top"
+  }
+}

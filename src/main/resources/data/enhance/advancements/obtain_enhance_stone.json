@@ -1,0 +1,31 @@
+{
+  "parent": "enhance:root",
+  "display": {
+    "icon": {
+      "item": "enhance:enhance_stone",
+      "nbt": "{Enchantments:[{id:\"minecraft:fortune\",lvl:3}]}"
+    },
+    "title": {
+      "translate": "advancements.enhance.obtain_enhance_stone.title"
+    },
+    "description": {
+      "translate": "advancements.enhance.obtain_enhance_stone.description"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "obtain_enhance_stone": {
+      "trigger": "enhance:obtain_enhance_stone",
+      "conditions": {}
+    }
+  },
+  "requirements": [
+    ["obtain_enhance_stone"]
+  ],
+  "rewards": {
+    "experience": 50
+  }
+}

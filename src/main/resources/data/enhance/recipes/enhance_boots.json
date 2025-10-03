@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "   ",
+    "G G",
+    "G G"
+  ],
+  "key": {
+    "G": {
+      "item": "enhance:enhance_stone"
+    }
+  },
+  "result": {
+    "item": "enhance:enhance_boots",
+    "count": 1
+  },
+  "group": "enhance"
+}

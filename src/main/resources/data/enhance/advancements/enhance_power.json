@@ -1,0 +1,27 @@
+{
+  "parent": "enhance:root",
+  "display": {
+    "icon": {
+      "item": "enhance:blue_gift",
+      "nbt": "{Enchantments:[{id:\"minecraft:fortune\",lvl:3}]}"
+    },
+    "title": {
+      "translate": "advancements.enhance.enhance_power.title"
+    },
+    "description": {
+      "translate": "advancements.enhance.enhance_power.description"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "reach_enhance_power": {
+      "trigger": "enhance:enhance_power"
+    }
+  },
+  "requirements": [
+    ["reach_enhance_power"]
+  ]
+}

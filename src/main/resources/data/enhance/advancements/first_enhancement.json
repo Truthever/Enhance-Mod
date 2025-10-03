@@ -1,0 +1,27 @@
+{
+  "parent": "enhance:root",
+  "display": {
+    "icon": {
+      "item": "enhance:green_gift",
+      "nbt": "{Enchantments:[{id:\"minecraft:power\",lvl:1}]}"
+    },
+    "title": {
+      "translate": "advancements.enhance.first_enhancement.title"
+    },
+    "description": {
+      "translate": "advancements.enhance.first_enhancement.description"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "obtain_first_enhancement": {
+      "trigger": "enhance:first_enhancement"
+    }
+  },
+  "requirements": [
+    ["obtain_first_enhancement"]
+  ]
+}

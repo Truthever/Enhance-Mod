@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    " I ",
+    "DGD",
+    " H "
+  ],
+  "key": {
+    "I": {
+      "item": "minecraft:iron_ingot"
+    },
+    "D": {
+      "item": "minecraft:diamond"
+    },
+    "G": {
+      "item": "minecraft:emerald"
+    },
+    "H":{
+  "item": "minecraft:gold_ingot"
+    }
+  },
+  "result": {
+    "item": "enhance:blue_gift",
+    "count": 1
+  },
+  "group": "gift_crafting"
+}

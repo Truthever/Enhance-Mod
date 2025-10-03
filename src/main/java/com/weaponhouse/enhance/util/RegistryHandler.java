@@ -1,0 +1,290 @@
+package com.weaponhouse.enhance.util;
+import com.weaponhouse.enhance.Enhance;
+import com.weaponhouse.enhance.items.armor.EnhanceBoots;
+import com.weaponhouse.enhance.items.armor.EnhanceChestplate;
+import com.weaponhouse.enhance.items.armor.EnhanceHelmet;
+import com.weaponhouse.enhance.items.armor.EnhanceLeggings;
+import net.minecraft.block.Block;
+import net.minecraft.enchantment.Enchantment;
+import net.minecraft.entity.EntityType;
+import net.minecraft.item.*;
+import net.minecraft.item.crafting.Ingredient;
+import net.minecraft.potion.Effect;
+import com.weaponhouse.enhance.items.*;
+import net.minecraft.inventory.EquipmentSlotType;
+import net.minecraft.util.SoundEvent;
+import net.minecraft.util.SoundEvents;
+import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.eventbus.api.IEventBus;
+import net.minecraftforge.fml.RegistryObject;
+import net.minecraftforge.registries.DeferredRegister;
+import net.minecraftforge.registries.ForgeRegistries;
+import com.weaponhouse.enhance.blocks.*;
+public class RegistryHandler {
+    public static final DeferredRegister<Item> ITEMS = DeferredRegister.create(ForgeRegistries.ITEMS, Enhance.MOD_ID);
+    public static final DeferredRegister<Block> BLOCKS = DeferredRegister.create(ForgeRegistries.BLOCKS, Enhance.MOD_ID);
+    public static final DeferredRegister<Effect> EFFECTS = DeferredRegister.create(ForgeRegistries.POTIONS, "enhance");
+    public static final DeferredRegister<Enchantment> ENCHANTMENTS = DeferredRegister.create(ForgeRegistries.ENCHANTMENTS, Enhance.MOD_ID);
+    public static final DeferredRegister<EntityType<?>> ENTITY_TYPES = DeferredRegister.create(ForgeRegistries.ENTITIES, Enhance.MOD_ID);
+    public static void init(IEventBus modEventBus) {
+        BLOCKS.register(modEventBus);
+        ITEMS.register(modEventBus);
+        EFFECTS.register(modEventBus);
+        ENCHANTMENTS.register(modEventBus);
+        ENTITY_TYPES.register(modEventBus);
+        MinecraftForge.EVENT_BUS.register(RegistryHandler.class);
+    }
+    private static final int[] ARMOR_SLOT_DURABILITY = new int[]{13, 15, 16, 11};
+    private static final int[] ARMOR_DEFENSE_VALUES = new int[]{3, 8, 6, 3};
+    private static final int BASE_ARMOR_DURABILITY = 2031;
+    private static final int ARMOR_ENCHANTABILITY = 15;
+    private static final float ARMOR_TOUGHNESS = 3.0F;
+    private static final float ARMOR_KNOCKBACK_RESISTANCE = 1.0F;
+    public static final RegistryObject<Block> ENHANCE_STONE_ORE = BLOCKS.register("enhance_stone_ore", EnhanceStoneOre::new);
+    public static final RegistryObject<Block> ENHANCE_BLOCK = BLOCKS.register("enhance_block", EnhanceBlock::new);
+    public static final RegistryObject<Block> REPLACE_BLOCK = BLOCKS.register("replace_block", ReplaceBlock::new);
+    public static final RegistryObject<Block> SACRIFICE_BLOCK = BLOCKS.register("sacrifice_block", SacrificeBlock::new);
+    public static final RegistryObject<Block> SPEED_REDUCER = BLOCKS.register("speed_reducer", SpeedReducer::new);
+    public static final RegistryObject<Item> ENHANCE_STONE_ORE_ITEM = ITEMS.register("enhance_stone_ore",
+            () -> new EnhanceStoneOreItem(ENHANCE_STONE_ORE.get(),
+                    new Item.Properties().group(Enhance.TAB)));
+    public static final RegistryObject<Item> ENHANCE_BLOCK_ITEM = ITEMS.register("enhance_block",
+            () -> new BlockItem(ENHANCE_BLOCK.get(),
+                    new Item.Properties().group(Enhance.TAB)));
+    public static final RegistryObject<Item> REPLACE_BLOCK_ITEM = ITEMS.register("replace_block",
+            () -> new BlockItem(REPLACE_BLOCK.get(),
+                    new Item.Properties().group(Enhance.TAB)));
+    public static final RegistryObject<Item> SACRIFICE_BLOCK_ITEM = ITEMS.register("sacrifice_block",
+            () -> new BlockItem(SACRIFICE_BLOCK.get(),
+                    new Item.Properties().group(Enhance.TAB)));
+    public static final RegistryObject<Item> SPEED_REDUCER_ITEM = ITEMS.register("speed_reducer",
+            () -> new BlockItem(SPEED_REDUCER.get(),
+                    new Item.Properties().group(Enhance.TAB)));
+    public static final RegistryObject<Item> GREEN_GIFT = ITEMS.register("green_gift", ItemBase::new);
+    public static final RegistryObject<Item> BLUE_GIFT = ITEMS.register("blue_gift", ItemBase::new);
+    public static final RegistryObject<Item> RED_GIFT = ITEMS.register("red_gift", ItemBase::new);
+    public static final RegistryObject<Item> PURPLE_GIFT = ITEMS.register("purple_gift", ItemBase::new);
+    public static final RegistryObject<Item> ENHANCE_STONE = ITEMS.register("enhance_stone", ItemBase::new);
+    public static final RegistryObject<Item> END_RETURN_STAFF = ITEMS.register("end_return_staff",
+            () -> new EndReturnStaffItem(
+                    new Item.Properties().group(Enhance.TAB)
+            )
+    );
+    public static final IItemTier ENHANCE_TIER = new IItemTier() {
+        @Override
+        public int getMaxUses() {
+            return 1500;
+        }
+        @Override
+        public float getEfficiency() {
+            return 10.0F;
+        }
+        @Override
+        public float getAttackDamage() {
+            return 8.0F;
+        }
+        @Override
+        public int getHarvestLevel() {
+            return 3;
+        }
+        @Override
+        public int getEnchantability() {
+            return 15;
+        }
+        @Override
+        public Ingredient getRepairMaterial() {
+            return Ingredient.fromItems(RegistryHandler.ENHANCE_STONE.get());
+        }
+    };
+    public static final RegistryObject<Item> ENHANCE_SWORD = ITEMS.register("enhance_sword",
+            () -> new EnhanceSwordItem(ENHANCE_TIER, 0, -2.4F,
+                    new Item.Properties().group(Enhance.TAB).isImmuneToFire()));
+    public static final IItemTier ENHANCE_PICKAXE_TIER = new IItemTier() {
+        @Override
+        public int getMaxUses() {
+            return 1561;
+        }
+        @Override
+        public float getEfficiency() {
+            return 10.0F;
+        }
+        @Override
+        public float getAttackDamage() {
+            return 3.0F;
+        }
+        @Override
+        public int getHarvestLevel() {
+            return 3;
+        }
+        @Override
+        public int getEnchantability() {
+            return 10;
+        }
+        @Override
+        public Ingredient getRepairMaterial() {
+            return Ingredient.fromItems(RegistryHandler.ENHANCE_STONE.get());
+        }
+    };
+    public static final RegistryObject<Item> ENHANCE_PICKAXE = ITEMS.register("enhance_pickaxe",
+            EnhancePickaxeItem::new);
+    public static final IItemTier ENHANCE_AXE_TIER = new IItemTier() {
+        @Override
+        public int getMaxUses() {
+            return 1500;
+        }
+        @Override
+        public float getEfficiency() {
+            return 8.0F;
+        }
+        @Override
+        public float getAttackDamage() {
+            return 9.0F;
+        }
+        @Override
+        public int getHarvestLevel() {
+            return 3;
+        }
+        @Override
+        public int getEnchantability() {
+            return 10;
+        }
+        @Override
+        public Ingredient getRepairMaterial() {
+            return Ingredient.fromItems(RegistryHandler.ENHANCE_STONE.get());
+        }
+    };
+    public static final RegistryObject<Item> ENHANCE_AXE = ITEMS.register("enhance_axe",
+            () -> new EnhanceAxeItem(
+                    ENHANCE_AXE_TIER,
+                    2,
+                    -3.1F,
+                    new Item.Properties().group(Enhance.TAB)
+            ));
+    public static final IItemTier ENHANCE_SHOVEL_TIER = new IItemTier() {
+        @Override
+        public int getMaxUses() {
+            return 500;
+        }
+        @Override
+        public float getEfficiency() {
+            return 10.0F;
+        }
+        @Override
+        public float getAttackDamage() {
+            return 3.0F;
+        }
+        @Override
+        public int getHarvestLevel() {
+            return 3;
+        }
+        @Override
+        public int getEnchantability() {
+            return 10;
+        }
+        @Override
+        public Ingredient getRepairMaterial() {
+            return Ingredient.fromItems(RegistryHandler.ENHANCE_STONE.get());
+        }
+    };
+    public static final RegistryObject<Item> ENHANCE_SHOVEL = ITEMS.register("enhance_shovel",
+            () -> new EnhanceShovelItem(
+                    ENHANCE_SHOVEL_TIER,
+                    1,
+                    -3.0F,
+                    new Item.Properties().group(Enhance.TAB)
+            ));
+    public static final IItemTier ENHANCE_HOE_TIER = new IItemTier() {
+        @Override
+        public int getMaxUses() {
+            return 1561;
+        }
+        @Override
+        public float getEfficiency() {
+            return 8.0F;
+        }
+        @Override
+        public float getAttackDamage() {
+            return -2.0F;
+        }
+        @Override
+        public int getHarvestLevel() {
+            return 3;
+        }
+        @Override
+        public int getEnchantability() {
+            return 10;
+        }
+        @Override
+        public Ingredient getRepairMaterial() {
+            return Ingredient.fromItems(RegistryHandler.ENHANCE_STONE.get());
+        }
+    };
+
+    public static final RegistryObject<Item> ENHANCE_HOE = ITEMS.register("enhance_hoe",
+            () -> new EnhanceHoeItem(
+                    ENHANCE_HOE_TIER,
+                    -3,
+                    0.0F,
+                    new Item.Properties()
+                            .group(Enhance.TAB)
+                            .maxStackSize(1)
+            ));
+    public static final IArmorMaterial ENHANCE_ARMOR_MATERIAL = new IArmorMaterial() {
+        @Override
+        public int getDurability(EquipmentSlotType slot) {
+            return BASE_ARMOR_DURABILITY * ARMOR_SLOT_DURABILITY[slot.getIndex()];
+        }
+        @Override
+        public int getDamageReductionAmount(EquipmentSlotType slot) {
+            return ARMOR_DEFENSE_VALUES[slot.getIndex()];
+        }
+        @Override
+        public int getEnchantability() {
+            return ARMOR_ENCHANTABILITY;
+        }
+        @Override
+        public SoundEvent getSoundEvent() {
+            return SoundEvents.ITEM_ARMOR_EQUIP_NETHERITE;
+        }
+        @Override
+        public Ingredient getRepairMaterial() {
+            return Ingredient.fromItems(ENHANCE_STONE.get());
+        }
+        @Override
+        public String getName() {
+            return "enhance:enhance";
+        }
+        @Override
+        public float getToughness() {
+            return ARMOR_TOUGHNESS;
+        }
+        @Override
+        public float getKnockbackResistance() {
+            return ARMOR_KNOCKBACK_RESISTANCE;
+        }
+    };
+    public static final RegistryObject<Item> ENHANCE_HELMET = ITEMS.register("enhance_helmet",
+            () -> new EnhanceHelmet(
+                    ENHANCE_ARMOR_MATERIAL,
+                    EquipmentSlotType.HEAD,
+                    new Item.Properties().group(Enhance.TAB)
+            ));
+    public static final RegistryObject<Item> ENHANCE_CHESTPLATE = ITEMS.register("enhance_chestplate",
+            () -> new EnhanceChestplate(
+                    ENHANCE_ARMOR_MATERIAL,
+                    EquipmentSlotType.CHEST,
+                    new Item.Properties().group(Enhance.TAB)
+            ));
+    public static final RegistryObject<Item> ENHANCE_LEGGINGS = ITEMS.register("enhance_leggings",
+            () -> new EnhanceLeggings(
+                    ENHANCE_ARMOR_MATERIAL,
+                    EquipmentSlotType.LEGS,
+                    new Item.Properties().group(Enhance.TAB)
+            ));
+    public static final RegistryObject<Item> ENHANCE_BOOTS = ITEMS.register("enhance_boots",
+            () -> new EnhanceBoots(
+                    ENHANCE_ARMOR_MATERIAL,
+                    EquipmentSlotType.FEET,
+                    new Item.Properties().group(Enhance.TAB)
+            ));
+}

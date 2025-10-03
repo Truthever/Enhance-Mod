@@ -1,0 +1,27 @@
+{
+  "parent": "enhance:root",
+  "display": {
+    "icon": {
+      "item": "enhance:enhance_block",
+      "nbt": "{Enchantments:[{id:\"minecraft:mending\",lvl:1}]}"
+    },
+    "title": {
+      "translate": "advancements.enhance.peak_achievement.title"
+    },
+    "description": {
+      "translate": "advancements.enhance.peak_achievement.description"
+    },
+    "frame": "challenge",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "complete_ultimate_challenge": {
+      "trigger": "enhance:peak_achievement"
+    }
+  },
+  "requirements": [
+    ["complete_ultimate_challenge"]
+  ]
+}

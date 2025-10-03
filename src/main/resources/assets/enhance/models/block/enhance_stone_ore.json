@@ -1,0 +1,6 @@
+{
+  "parent": "block/cube_all",
+  "textures": {
+    "all": "enhance:block/enhance_stone_ore"
+  }
+}

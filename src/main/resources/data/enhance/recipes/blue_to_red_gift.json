@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "BBB",
+    "BBB",
+    "BBB"
+  ],
+  "key": {
+    "B": {
+      "item": "enhance:blue_gift"
+    }
+  },
+  "result": {
+    "item": "enhance:red_gift",
+    "count": 1
+  },
+  "group": "gift_crafting"
+}

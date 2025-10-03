@@ -1,0 +1,5 @@
+{
+  "variants": {
+    "": { "model": "enhance:block/enhance_stone_ore" }
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "enhance:item/enhance_helmet"
+  },
+  "item_tags": {
+    "minecraft:is_helmet": true,
+    "minecraft:creative_mode_tab/is_equipment": true
+  },
+  "properties": {
+    "max_stack": 1
+  }
+}

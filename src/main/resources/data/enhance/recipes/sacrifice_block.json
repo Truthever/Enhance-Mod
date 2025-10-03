@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "WEW",
+    "GSG",
+    "WEW"
+  ],
+  "key": {
+    "W": {
+      "tag": "minecraft:planks"
+    },
+    "E": {
+      "item": "minecraft:book"
+    },
+    "S": {
+      "item": "enhance:enhance_block"
+    },
+    "G": {
+      "item": "minecraft:redstone_block"
+    }
+  },
+  "result": {
+    "item": "enhance:sacrifice_block",
+    "count": 1
+  },
+  "group": "enhance_blocks"
+}

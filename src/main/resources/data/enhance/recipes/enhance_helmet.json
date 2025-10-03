@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "GGG",
+    "G G",
+    "   "
+  ],
+  "key": {
+    "G": {
+      "item": "enhance:enhance_stone"
+    }
+  },
+  "result": {
+    "item": "enhance:enhance_helmet",
+    "count": 1
+  },
+  "group": "enhance"
+}

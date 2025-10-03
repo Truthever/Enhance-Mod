@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "WEW",
+    "SSS",
+    "WEW"
+  ],
+  "key": {
+    "W": {
+      "tag": "minecraft:planks"
+    },
+    "E": {
+      "item": "minecraft:book"
+    },
+    "S": {
+      "item": "enhance:enhance_stone"
+    }
+  },
+  "result": {
+    "item": "enhance:replace_block",
+    "count": 1
+  },
+  "group": "enhance_blocks"
+}

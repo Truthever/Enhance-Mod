@@ -1,0 +1,27 @@
+{
+  "parent": "enhance:root",
+  "display": {
+    "icon": {
+      "item": "enhance:sacrifice_block",
+      "nbt": "{Enchantments:[{id:\"minecraft:unbreaking\",lvl:1}]}"
+    },
+    "title": {
+      "translate": "advancements.enhance.sacrifice.title"
+    },
+    "description": {
+      "translate": "advancements.enhance.sacrifice.description"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "complete_sacrifice": {
+      "trigger": "enhance:sacrifice"
+    }
+  },
+  "requirements": [
+    ["complete_sacrifice"]
+  ]
+}
