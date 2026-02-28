@@ -9,12 +9,14 @@ import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraft.util.text.TextFormatting;
+import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraft.world.World;
+import net.minecraftforge.event.world.BlockEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.event.world.BlockEvent;
+
+import java.util.Objects;
 import java.util.Random;
 @Mod.EventBusSubscriber(bus = Mod.EventBusSubscriber.Bus.FORGE)
 public class EnhanceHoeEventHandler {
@@ -41,7 +43,7 @@ public class EnhanceHoeEventHandler {
         int effectiveLevel = Math.min(playerEnhanceLevel, MAX_ENHANCE_LEVEL);
         event.setCanceled(true);
         world.destroyBlock(pos, false);
-        String blockRegistryName = block.getRegistryName().toString();
+        String blockRegistryName = Objects.requireNonNull(block.getRegistryName()).toString();
         if (WHEAT_BLOCK_REGISTRY_NAME.equals(blockRegistryName)) {
             handleWheatDrop(world, pos, effectiveLevel);
         } else {
@@ -56,9 +58,8 @@ public class EnhanceHoeEventHandler {
         return currentAge >= maxAge;
     }
     private static int getPlayerEnhanceLevel(PlayerEntity player) {
-        int level = player.getPersistentData().getCompound(EnhanceCommand.BUFF_TAG)
+        return player.getPersistentData().getCompound(EnhanceCommand.BUFF_TAG)
                 .getInt(EnhanceCommand.ENHANCE_LEVEL_TAG);
-        return level;
     }
     private static void handleWheatDrop(World world, BlockPos pos, int bonusLevel) {
         int wheatCount = 1 + bonusLevel;
@@ -78,10 +79,6 @@ public class EnhanceHoeEventHandler {
             player.sendMessage(new TranslationTextComponent(
                     "message.enhance_hoe.yield_bonus", effectiveLevel, 1 + effectiveLevel
             ).mergeStyle(TextFormatting.GREEN), player.getUniqueID());
-        } else {
-            player.sendMessage(new TranslationTextComponent(
-                    "message.enhance_hoe.no_bonus"
-            ).mergeStyle(TextFormatting.GRAY), player.getUniqueID());
         }
     }
 }

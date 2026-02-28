@@ -1,4 +1,5 @@
 package com.weaponhouse.enhance.util;
+
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
@@ -12,31 +13,6 @@ import java.nio.file.Path;
 import java.util.*;
 public class ConfigLoader {
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
-    public static boolean BLIND_MODE = false;
-    public static boolean PORTABLE_UI_ENABLED = false;
-    public static boolean ENHANCE_BOSSBAR_ENABLED = true;
-    public static class FireResistanceSetting {
-        private final boolean enabled;
-        private final int durationTicks;
-        private final boolean persistent;
-        public FireResistanceSetting(boolean enabled, int durationSeconds, boolean persistent) {
-            this.enabled = enabled;
-            this.durationTicks = durationSeconds * 20;
-            this.persistent = persistent;
-        }
-        public boolean isEnabled() { return enabled; }
-        public int getDurationTicks() { return durationTicks; }
-        public boolean isPersistent() { return persistent; }
-    }
-    public static Map<String, List<String>> TIER_ONE_BAN_BY_DIFFICULTY = new HashMap<>();
-    public static Map<String, List<String>> TIER_TWO_BAN_BY_DIFFICULTY = new HashMap<>();
-    public static Map<String, List<String>> TIER_THREE_BAN_BY_DIFFICULTY = new HashMap<>();
-    public static float ENHANCE_STONE_DROP_CHANCE_TIER1 = 0.02f;
-    public static float ENHANCE_STONE_DROP_CHANCE_TIER2 = 0.05f;
-    public static float ENHANCE_STONE_DROP_CHANCE_TIER3 = 0.1f;
-    public static boolean DEATH_PENALTY_ENABLED = true;
-    public static int DEATH_PENALTY_THRESHOLD = 3;
-    public static Map<String, FireResistanceSetting> FIRE_RESISTANCE_SETTINGS = new HashMap<>();
     private static final Path GAME_ROOT_DIR = FMLLoader.getGamePath();
     public static final Path CONFIG_DIR = GAME_ROOT_DIR.resolve("config").resolve("enhance");
     public static Map<String, Float> ENHANCER_CHANCES = new HashMap<>();
@@ -48,6 +24,12 @@ public class ConfigLoader {
     public static int GREEN_GIFT_BUFF_COUNT = 1;
     public static int BLUE_GIFT_BUFF_COUNT = 1;
     public static int RED_GIFT_BUFF_COUNT = 1;
+    public static float ENHANCE_STONE_DROP_CHANCE_TIER1 = 0.05f;
+    public static float ENHANCE_STONE_DROP_CHANCE_TIER2 = 0.20f;
+    public static float ENHANCE_STONE_DROP_CHANCE_TIER3 = 0.80f;
+    public static Map<String, List<String>> TIER_ONE_BAN_BY_DIFFICULTY = new HashMap<>();
+    public static Map<String, List<String>> TIER_TWO_BAN_BY_DIFFICULTY = new HashMap<>();
+    public static Map<String, List<String>> TIER_THREE_BAN_BY_DIFFICULTY = new HashMap<>();
     public static Map<String, List<String>> TIER_ONE_BUFFS_BY_DIFFICULTY = new HashMap<>();
     public static Map<String, List<String>> TIER_TWO_BUFFS_BY_DIFFICULTY = new HashMap<>();
     public static Map<String, List<String>> TIER_THREE_BUFFS_BY_DIFFICULTY = new HashMap<>();
@@ -56,11 +38,11 @@ public class ConfigLoader {
     public static Map<String, Map<String, int[]>> TIER_THREE_RANGES_BY_DIFFICULTY = new HashMap<>();
     public static Map<String, int[]> GREEN_GIFT_BUFF_RANGES = new HashMap<>();
     public static Map<String, int[]> BLUE_GIFT_BUFF_RANGES = new HashMap<>();
+    public static Map<String, int[]> RED_GIFT_BUFF_RANGES = new HashMap<>();
+    public static Map<String, int[]> RED_GIFT_HARD_BUFF_RANGES = new HashMap<>();
     public static List<String> GREEN_GIFT_AVAILABLE_BUFFS = new ArrayList<>();
     public static List<String> BLUE_GIFT_AVAILABLE_BUFFS = new ArrayList<>();
     public static List<String> RED_GIFT_AVAILABLE_BUFFS = new ArrayList<>();
-    public static Map<String, int[]> RED_GIFT_BUFF_RANGES = new HashMap<>();
-    public static Map<String, int[]> RED_GIFT_HARD_BUFF_RANGES = new HashMap<>();
     public static Map<String, Map<String, Object>> TIER_BUFF_GUARANTEE_RULES = new HashMap<>();
     public static void loadConfigs() {
         File configDir = CONFIG_DIR.toFile();
@@ -71,103 +53,6 @@ public class ConfigLoader {
         loadBuffPoolConfig();
         loadGiftBuffConfig();
         loadBuffGuaranteeConfig();
-        loadFireResistanceSettings();
-    }
-    private static void loadFireResistanceSettings() {
-        File configFile = CONFIG_DIR.resolve("settings.json").toFile();
-        if (!configFile.exists()) {
-            createDefaultFireResistanceSettings(configFile);
-            return;
-        }
-        try (FileReader reader = new FileReader(configFile)) {
-            Type rootType = new TypeToken<Map<String, Object>>() {}.getType();
-            Map<String, Object> root = GSON.fromJson(reader, rootType);
-            Map<String, Object> fireResNode = (Map<String, Object>) root.getOrDefault(
-                    "fire_resistance_settings",
-                    new HashMap<>()
-            );
-            loadSingleTierFireResSetting(fireResNode, "tier1", false, 300, true);
-            loadSingleTierFireResSetting(fireResNode, "tier2", false, 600, true);
-            PORTABLE_UI_ENABLED = (boolean) root.getOrDefault("portable_ui_enabled", false);
-            loadSingleTierFireResSetting(fireResNode, "tier3", true, 10000, true);
-            DEATH_PENALTY_ENABLED = (boolean) root.getOrDefault("death_penalty_enabled", true);
-            DEATH_PENALTY_THRESHOLD = getIntFromConfig(
-                    root,
-                    "death_penalty_threshold",
-                    "death_penalty_threshold",
-                    3
-            );
-            DEATH_PENALTY_THRESHOLD = Math.max(0, DEATH_PENALTY_THRESHOLD);
-            ENHANCE_BOSSBAR_ENABLED = (boolean) root.getOrDefault("enhance_bossbar", true);
-            BLIND_MODE = (boolean) root.getOrDefault("blind_mode", false);
-        } catch (IOException e) {
-            setDefaultFireResistanceSettings();
-        }
-    }
-    @SuppressWarnings("unchecked")
-    private static void loadSingleTierFireResSetting(
-            Map<String, Object> fireResNode,
-            String tierKey,
-            boolean defaultEnabled,
-            int defaultDurationSec,
-            boolean defaultPersistent
-    ) {
-        if (!fireResNode.containsKey(tierKey)) {
-            FIRE_RESISTANCE_SETTINGS.put(tierKey, new FireResistanceSetting(
-                    defaultEnabled, defaultDurationSec, defaultPersistent
-            ));
-            return;
-        }
-        Map<String, Object> tierConfig = (Map<String, Object>) fireResNode.get(tierKey);
-        boolean enabled = (boolean) tierConfig.getOrDefault("enabled", defaultEnabled);
-        int durationSec = getIntFromConfig(
-                tierConfig,
-                "duration_seconds",
-                "fire_resistance_settings." + tierKey + ".duration_seconds",
-                defaultDurationSec
-        );
-        boolean persistent = (boolean) tierConfig.getOrDefault("persistent", defaultPersistent);
-        FIRE_RESISTANCE_SETTINGS.put(tierKey, new FireResistanceSetting(
-                enabled,
-                Math.max(1, durationSec),
-                persistent
-        ));
-    }
-    private static void createDefaultFireResistanceSettings(File configFile) {
-        Map<String, Object> defaultRoot = new HashMap<>();
-        Map<String, Object> fireResNode = new HashMap<>();
-        Map<String, Object> tier1 = new HashMap<>();
-        tier1.put("enabled", false);
-        tier1.put("duration_seconds", 300);
-        tier1.put("persistent", true);
-        fireResNode.put("tier1", tier1);
-        Map<String, Object> tier2 = new HashMap<>();
-        tier2.put("enabled", false);
-        tier2.put("duration_seconds", 600);
-        tier2.put("persistent", true);
-        fireResNode.put("tier2", tier2);
-        Map<String, Object> tier3 = new HashMap<>();
-        tier3.put("enabled", true);
-        tier3.put("duration_seconds", 10000);
-        tier3.put("persistent", true);
-        fireResNode.put("tier3", tier3);
-        defaultRoot.put("fire_resistance_settings", fireResNode);
-        defaultRoot.put("portable_ui_enabled", false);
-        defaultRoot.put("death_penalty_enabled", true);
-        defaultRoot.put("death_penalty_threshold", 3);
-        defaultRoot.put("enhance_bossbar", true);
-        defaultRoot.put("blind_mode", false);
-        try (FileWriter writer = new FileWriter(configFile)) {
-            String json = GSON.toJson(defaultRoot);
-            writer.write(json);
-        } catch (IOException e) {
-        }
-    }
-    private static void setDefaultFireResistanceSettings() {
-        FIRE_RESISTANCE_SETTINGS.clear();
-        FIRE_RESISTANCE_SETTINGS.put("tier1", new FireResistanceSetting(false, 300, true));
-        FIRE_RESISTANCE_SETTINGS.put("tier2", new FireResistanceSetting(false, 600, true));
-        FIRE_RESISTANCE_SETTINGS.put("tier3", new FireResistanceSetting(true, 10000, true));
     }
     private static void loadBuffGuaranteeConfig() {
         File configFile = CONFIG_DIR.resolve("buff_guarantee.json").toFile();
@@ -186,6 +71,7 @@ public class ConfigLoader {
             setDefaultGuaranteeRules();
         }
     }
+    @SuppressWarnings("unchecked")
     private static void initGuaranteeRule(Map<String, Map<String, Object>> loadedRules, String tierKey) {
         Map<String, Object> defaultRule = getDefaultGuaranteeRule(tierKey);
         Map<String, Object> loadedRule = loadedRules.getOrDefault(tierKey, new HashMap<>());
@@ -205,8 +91,12 @@ public class ConfigLoader {
                 }
             }
         }
-        Map<String, String> finalForceBuffs = new HashMap<>(defaultForceBuffs);
-        finalForceBuffs.putAll(loadedForceBuffs);
+        Map<String, String> finalForceBuffs;
+        if (loadedRule.containsKey("force_buffs")) {
+            finalForceBuffs = new HashMap<>(loadedForceBuffs);
+        } else {
+            finalForceBuffs = new HashMap<>(defaultForceBuffs);
+        }
         finalRule.put("force_buffs", finalForceBuffs);
         TIER_BUFF_GUARANTEE_RULES.put(tierKey, finalRule);
     }
@@ -248,18 +138,18 @@ public class ConfigLoader {
         tier1ForceBuffs.put("life", "random");
         tier1Rule.put("force_buffs", tier1ForceBuffs);
         tier1Rule.put("guaranteed_min", 2);
-        tier1Rule.put("chain_init_prob", 0.5f);
+        tier1Rule.put("chain_init_prob", 0.8f);
         tier1Rule.put("chain_next_prob", 0.35f);
         defaultConfig.put("tier1", tier1Rule);
         Map<String, Object> tier2Rule = new HashMap<>();
         tier2Rule.put("force_buffs", new HashMap<String, String>());
-        tier2Rule.put("guaranteed_min", 3);
+        tier2Rule.put("guaranteed_min", 4);
         tier2Rule.put("chain_init_prob", 0.5f);
         tier2Rule.put("chain_next_prob", 0.35f);
         defaultConfig.put("tier2", tier2Rule);
         Map<String, Object> tier3Rule = new HashMap<>();
         tier3Rule.put("force_buffs", new HashMap<String, String>());
-        tier3Rule.put("guaranteed_min", 6);
+        tier3Rule.put("guaranteed_min", 7);
         tier3Rule.put("chain_init_prob", 0.6f);
         tier3Rule.put("chain_next_prob", 0.40f);
         defaultConfig.put("tier3", tier3Rule);
@@ -267,7 +157,7 @@ public class ConfigLoader {
             Gson gsonWithComment = new GsonBuilder().setPrettyPrinting().create();
             String jsonWithComment = gsonWithComment.toJson(defaultConfig);
             writer.write(jsonWithComment);
-        } catch (IOException e) {
+        } catch (IOException ignored) {
         }
     }
     private static void setDefaultGuaranteeRules() {
@@ -280,6 +170,12 @@ public class ConfigLoader {
         String tierKey = "tier" + tier;
         return TIER_BUFF_GUARANTEE_RULES.getOrDefault(tierKey, getDefaultGuaranteeRule(tierKey));
     }
+    @SuppressWarnings("unchecked")
+    public static Map<String, String> getForcedBuffLevelRules(int tier) {
+        String tierKey = "tier" + tier;
+        Map<String, Object> rule = TIER_BUFF_GUARANTEE_RULES.getOrDefault(tierKey, getDefaultGuaranteeRule(tierKey));
+        return (Map<String, String>) rule.get("force_buffs");
+    }
     private static void loadGiftBuffConfig() {
         File configFile = CONFIG_DIR.resolve("gift_buffs.json").toFile();
         if (!configFile.exists()) {
@@ -290,54 +186,41 @@ public class ConfigLoader {
             Type rootType = new TypeToken<Map<String, Object>>() {}.getType();
             Map<String, Object> giftConfigRoot = GSON.fromJson(reader, rootType);
             Map<String, Object> greenGiftNode = (Map<String, Object>) giftConfigRoot.getOrDefault("green_gift", new HashMap<>());
-            GREEN_GIFT_BUFF_COUNT = getIntFromConfig(
-                    greenGiftNode,
-                    "buff_count",
-                    "green_gift.buff_count",
-                    1
-            );
+            GREEN_GIFT_BUFF_COUNT = getIntFromConfig(greenGiftNode, "green_gift.buff_count");
             Map<String, Object> blueGiftNode = (Map<String, Object>) giftConfigRoot.getOrDefault("blue_gift", new HashMap<>());
-            BLUE_GIFT_BUFF_COUNT = getIntFromConfig(
-                    blueGiftNode,
-                    "buff_count",
-                    "blue_gift.buff_count",
-                    1
-            );
+            BLUE_GIFT_BUFF_COUNT = getIntFromConfig(blueGiftNode, "blue_gift.buff_count");
             Map<String, Object> redGiftNode = (Map<String, Object>) giftConfigRoot.getOrDefault("red_gift", new HashMap<>());
-            RED_GIFT_BUFF_COUNT = getIntFromConfig(
-                    redGiftNode,
-                    "buff_count",
-                    "red_gift.buff_count",
-                    1
-            );
-            loadSingleGiftConfig(giftConfigRoot, "green_gift", new TypeToken<Map<String, List<Number>>>() {}.getType(), new TypeToken<List<String>>() {}.getType());
-            loadSingleGiftConfig(giftConfigRoot, "blue_gift", new TypeToken<Map<String, List<Number>>>() {}.getType(), new TypeToken<List<String>>() {}.getType());
-            loadSingleGiftConfig(
-                    giftConfigRoot,
-                    "red_gift",
+            RED_GIFT_BUFF_COUNT = getIntFromConfig(redGiftNode, "red_gift.buff_count");
+            loadSingleGiftConfig(giftConfigRoot, "green_gift",
                     new TypeToken<Map<String, List<Number>>>() {}.getType(),
-                    new TypeToken<List<String>>() {}.getType()
-            );
+                    new TypeToken<List<String>>() {}.getType());
+            loadSingleGiftConfig(giftConfigRoot, "blue_gift",
+                    new TypeToken<Map<String, List<Number>>>() {}.getType(),
+                    new TypeToken<List<String>>() {}.getType());
+            loadSingleGiftConfig(giftConfigRoot, "red_gift",
+                    new TypeToken<Map<String, List<Number>>>() {}.getType(),
+                    new TypeToken<List<String>>() {}.getType());
             loadRedGiftHardConfig(giftConfigRoot);
+
         } catch (IOException e) {
             resetToDefaultGiftConfig();
         }
     }
-    private static int getIntFromConfig(Map<String, Object> configMap, String configKey, String logKey, int defaultValue) {
+    private static int getIntFromConfig(Map<String, Object> configMap, String logKey) {
         try {
-            if (configMap == null || !configMap.containsKey(configKey)) {
-                return defaultValue;
+            if (configMap == null || !configMap.containsKey("buff_count")) {
+                return 1;
             }
-            Object valueObj = configMap.get(configKey);
+            Object valueObj = configMap.get("buff_count");
             if (valueObj instanceof Number) {
                 return ((Number) valueObj).intValue();
             } else if (valueObj instanceof String) {
                 return Integer.parseInt((String) valueObj);
             } else {
-                return defaultValue;
+                return 1;
             }
         } catch (Exception e) {
-            return defaultValue;
+            return 1;
         }
     }
     @SuppressWarnings("unchecked")
@@ -366,8 +249,8 @@ public class ConfigLoader {
         RED_GIFT_HARD_BUFF_RANGES.put("megaforce", new int[]{15, 40});
         RED_GIFT_HARD_BUFF_RANGES.put("thunder", new int[]{20, 50});
         RED_GIFT_HARD_BUFF_RANGES.put("life", new int[]{30, 60});
-        RED_GIFT_HARD_BUFF_RANGES.put("aura", new int[]{8,20});
-        RED_GIFT_HARD_BUFF_RANGES.put("fasting", new int[]{8,20});
+        RED_GIFT_HARD_BUFF_RANGES.put("aura", new int[]{8, 20});
+        RED_GIFT_HARD_BUFF_RANGES.put("fasting", new int[]{8, 20});
         RED_GIFT_HARD_BUFF_RANGES.put("hunger", new int[]{20, 50});
         RED_GIFT_HARD_BUFF_RANGES.put("phantom", new int[]{6, 8});
         RED_GIFT_HARD_BUFF_RANGES.put("photosynthesis", new int[]{15, 30});
@@ -432,17 +315,12 @@ public class ConfigLoader {
         }
         return result;
     }
-    @SuppressWarnings("unchecked")
-    public static Map<String, String> getForcedBuffLevelRules(int tier) {
-        String tierKey = "tier" + tier;
-        Map<String, Object> rule = TIER_BUFF_GUARANTEE_RULES.getOrDefault(tierKey, getDefaultGuaranteeRule(tierKey));
-        return (Map<String, String>) rule.get("force_buffs");
-    }
     private static void createDefaultGiftBuffConfig(File configFile) {
         Map<String, Object> defaultGiftConfig = new HashMap<>();
+
         Map<String, Object> greenGiftConfig = new HashMap<>();
         greenGiftConfig.put("buff_count", 1);
-        List<String> greenGiftBuffs = Arrays.asList("frost", "life", "attack", "megaforce", "vampire", "hunger", "phantom", "photosynthesis");
+        List<String> greenGiftBuffs = Arrays.asList("frost", "life", "attack", "megaforce", "vampire", "hunger", "phantom", "photosynthesis","chaos","inspiration","spirit_shield","corrosion","combo");
         Map<String, List<Number>> greenGiftRanges = new HashMap<>();
         greenGiftRanges.put("frost", Arrays.asList(1, 10));
         greenGiftRanges.put("life", Arrays.asList(1, 10));
@@ -452,11 +330,18 @@ public class ConfigLoader {
         greenGiftRanges.put("hunger", Arrays.asList(1, 5));
         greenGiftRanges.put("phantom", Arrays.asList(1, 1));
         greenGiftRanges.put("photosynthesis", Arrays.asList(1, 2));
+        greenGiftRanges.put("chaos", Arrays.asList(1, 10));
+        greenGiftRanges.put("inspiration", Arrays.asList(1, 1));
+        greenGiftRanges.put("spirit_shield", Arrays.asList(1, 5));
+        greenGiftRanges.put("corrosion", Arrays.asList(1, 3));
+        greenGiftRanges.put("combo", Arrays.asList(1, 2));
         greenGiftConfig.put("available_buffs", greenGiftBuffs);
         greenGiftConfig.put("ranges", greenGiftRanges);
         Map<String, Object> blueGiftConfig = new HashMap<>();
         blueGiftConfig.put("buff_count", 1);
-        List<String> blueGiftBuffs = Arrays.asList("frost", "life", "attack", "megaforce", "vampire", "rob", "thunder", "ricochet", "harmony", "curse", "thorns", "hunger", "displacement", "death_bomb", "unyielding", "phantom", "photosynthesis","aura","fasting");
+        List<String> blueGiftBuffs = Arrays.asList("frost", "life", "attack", "megaforce", "vampire", "rob", "thunder", "ricochet",
+                "harmony", "curse", "thorns", "hunger", "displacement", "death_bomb",
+                "unyielding", "phantom", "photosynthesis","aura","fasting","chaos","inspiration","annihilation","spirit_shield","corrosion","combo");
         Map<String, List<Number>> blueGiftRanges = new HashMap<>();
         blueGiftRanges.put("frost", Arrays.asList(5, 20));
         blueGiftRanges.put("life", Arrays.asList(5, 20));
@@ -475,15 +360,21 @@ public class ConfigLoader {
         blueGiftRanges.put("hunger", Arrays.asList(6, 10));
         blueGiftRanges.put("death_bomb", Arrays.asList(6, 10));
         blueGiftRanges.put("unyielding", Arrays.asList(1, 1));
-        blueGiftRanges.put("phantom", Arrays.asList(3, 4));
+        blueGiftRanges.put("phantom", Arrays.asList(2, 4));
         blueGiftRanges.put("photosynthesis", Arrays.asList(3, 7));
+        blueGiftRanges.put("chaos", Arrays.asList(11, 20));
+        blueGiftRanges.put("inspiration", Arrays.asList(2,2));
+        blueGiftRanges.put("annihilation", Arrays.asList(1,6));
+        blueGiftRanges.put("spirit_shield", Arrays.asList(6,12));
+        blueGiftRanges.put("combo", Arrays.asList(2, 3));
+        blueGiftRanges.put("corrosion", Arrays.asList(1, 6));
         blueGiftConfig.put("available_buffs", blueGiftBuffs);
         blueGiftConfig.put("ranges", blueGiftRanges);
         Map<String, Object> redGiftConfig = new HashMap<>();
         List<String> redGiftBuffs = Arrays.asList(
                 "frost", "life", "attack", "megaforce", "vampire", "rob", "thunder",
                 "ricochet", "harmony", "curse", "thorns", "hunger", "displacement",
-                "death_bomb", "unyielding", "phantom", "photosynthesis","aura","fasting"
+                "death_bomb", "unyielding", "phantom", "photosynthesis","aura","fasting","chaos","inspiration","annihilation","spirit_shield","corrosion","combo"
         );
         Map<String, List<Number>> redGiftRanges = new HashMap<>();
         redGiftConfig.put("buff_count", 1);
@@ -506,6 +397,12 @@ public class ConfigLoader {
         redGiftRanges.put("unyielding", Arrays.asList(4, 7));
         redGiftRanges.put("phantom", Arrays.asList(5, 6));
         redGiftRanges.put("photosynthesis", Arrays.asList(8, 15));
+        redGiftRanges.put("chaos", Arrays.asList(21, 30));
+        redGiftRanges.put("inspiration", Arrays.asList(3,3));
+        redGiftRanges.put("annihilation", Arrays.asList(5,8));
+        redGiftRanges.put("spirit_shield", Arrays.asList(12,20));
+        redGiftRanges.put("combo", Arrays.asList(4, 5));
+        redGiftRanges.put("corrosion", Arrays.asList(5,8));
         Map<String, List<Number>> hardRanges = new HashMap<>();
         hardRanges.put("frost", Arrays.asList(30, 60));
         hardRanges.put("life", Arrays.asList(30, 60));
@@ -526,6 +423,12 @@ public class ConfigLoader {
         hardRanges.put("unyielding", Arrays.asList(5, 15));
         hardRanges.put("phantom", Arrays.asList(6, 8));
         hardRanges.put("photosynthesis", Arrays.asList(15, 30));
+        hardRanges.put("chaos", Arrays.asList(25, 40));
+        hardRanges.put("inspiration", Arrays.asList(3,3));
+        hardRanges.put("annihilation", Arrays.asList(7,10));
+        hardRanges.put("spirit_shield", Arrays.asList(20,30));
+        hardRanges.put("combo", Arrays.asList(5,5));
+        hardRanges.put("corrosion", Arrays.asList(7,10));
         redGiftConfig.put("available_buffs", redGiftBuffs);
         redGiftConfig.put("ranges", redGiftRanges);
         redGiftConfig.put("hard_ranges", hardRanges);
@@ -534,7 +437,7 @@ public class ConfigLoader {
         defaultGiftConfig.put("red_gift", redGiftConfig);
         try (FileWriter writer = new FileWriter(configFile)) {
             GSON.toJson(defaultGiftConfig, writer);
-        } catch (IOException e) {}
+        } catch (IOException ignored) {}
     }
     private static void resetToDefaultGiftConfig() {
         GREEN_GIFT_AVAILABLE_BUFFS.clear();
@@ -599,6 +502,7 @@ public class ConfigLoader {
         GREEN_GIFT_BUFF_COUNT = 1;
         BLUE_GIFT_BUFF_COUNT = 1;
         RED_GIFT_BUFF_COUNT = 1;
+
         loadDefaultRedGiftHardRanges();
     }
     private static void loadProbabilityConfig() {
@@ -629,9 +533,9 @@ public class ConfigLoader {
             GREEN_GIFT_DROP_CHANCE = getFloat(probabilities, "green_gift_drop_chance", 0.3f);
             BLUE_GIFT_DROP_CHANCE = getFloat(probabilities, "blue_gift_drop_chance", 0.25f);
             RED_GIFT_DROP_CHANCE = getFloat(probabilities, "red_gift_drop_chance", 0.2f);
-            ENHANCE_STONE_DROP_CHANCE_TIER1 = getFloat(probabilities, "enhance_stone_drop_chance_tier1", 0.02f);
-            ENHANCE_STONE_DROP_CHANCE_TIER2 = getFloat(probabilities, "enhance_stone_drop_chance_tier2", 0.05f);
-            ENHANCE_STONE_DROP_CHANCE_TIER3 = getFloat(probabilities, "enhance_stone_drop_chance_tier3", 0.1f);
+            ENHANCE_STONE_DROP_CHANCE_TIER1 = getFloat(probabilities, "enhance_stone_drop_chance_tier1", 0.05f);
+            ENHANCE_STONE_DROP_CHANCE_TIER2 = getFloat(probabilities, "enhance_stone_drop_chance_tier2", 0.20f);
+            ENHANCE_STONE_DROP_CHANCE_TIER3 = getFloat(probabilities, "enhance_stone_drop_chance_tier3", 0.80f);
         } catch (IOException e) {
             System.err.println("Failed to load probability config: " + e.getMessage());
             ENHANCER_CHANCES.clear();
@@ -639,6 +543,13 @@ public class ConfigLoader {
             ENHANCER_CHANCES.put("normal", 0.3f);
             ENHANCER_CHANCES.put("hard", 0.5f);
         }
+    }
+    private static float getFloat(Map<String, Object> map, String key, float defaultValue) {
+        Object value = map.get(key);
+        if (value instanceof Number) {
+            return ((Number) value).floatValue();
+        }
+        return defaultValue;
     }
     private static void loadBuffPoolConfig() {
         File configFile = CONFIG_DIR.resolve("buff_pools.json").toFile();
@@ -664,6 +575,7 @@ public class ConfigLoader {
             );
             if (tierOneRangesRaw == null) tierOneRangesRaw = new HashMap<>();
             TIER_ONE_RANGES_BY_DIFFICULTY.putAll(parseDifficultyRanges(tierOneRangesRaw));
+
             Type tierTwoRangesType = new TypeToken<Map<String, Map<String, List<Number>>>>() {}.getType();
             Map<String, Map<String, List<Number>>> tierTwoRangesRaw = GSON.fromJson(
                     GSON.toJson(buffPoolsRoot.get("tier_two_ranges_by_difficulty")),
@@ -671,6 +583,7 @@ public class ConfigLoader {
             );
             if (tierTwoRangesRaw == null) tierTwoRangesRaw = new HashMap<>();
             TIER_TWO_RANGES_BY_DIFFICULTY.putAll(parseDifficultyRanges(tierTwoRangesRaw));
+
             Type tierThreeRangesType = new TypeToken<Map<String, Map<String, List<Number>>>>() {}.getType();
             Map<String, Map<String, List<Number>>> tierThreeRangesRaw = GSON.fromJson(
                     GSON.toJson(buffPoolsRoot.get("tier_three_ranges_by_difficulty")),
@@ -678,6 +591,7 @@ public class ConfigLoader {
             );
             if (tierThreeRangesRaw == null) tierThreeRangesRaw = new HashMap<>();
             TIER_THREE_RANGES_BY_DIFFICULTY.putAll(parseDifficultyRanges(tierThreeRangesRaw));
+
         } catch (IOException e) {
             createDefaultBuffPoolConfig(CONFIG_DIR.resolve("buff_pools.json").toFile());
         }
@@ -686,13 +600,9 @@ public class ConfigLoader {
     private static void parseTierBuffPool(Map<String, Object> root, String configKey,
                                           Map<String, List<String>> buffsMap,
                                           Map<String, List<String>> banMap) {
-        if (!root.containsKey(configKey)) {
-            return;
-        }
+        if (!root.containsKey(configKey)) return;
         Object configObj = root.get(configKey);
-        if (!(configObj instanceof Map)) {
-            return;
-        }
+        if (!(configObj instanceof Map)) return;
         Map<String, Object> rawPool = (Map<String, Object>) configObj;
         for (Map.Entry<String, Object> entry : rawPool.entrySet()) {
             String difficulty = entry.getKey();
@@ -701,79 +611,23 @@ public class ConfigLoader {
             List<String> banList = new ArrayList<>();
             if (value instanceof Map) {
                 Map<String, Object> configObj2 = (Map<String, Object>) value;
+
                 if (configObj2.containsKey("buffs") && configObj2.get("buffs") instanceof List) {
                     List<?> rawBuffs = (List<?>) configObj2.get("buffs");
                     for (Object item : rawBuffs) {
-                        if (item instanceof String) {
-                            buffsList.add((String) item);
-                        }
+                        if (item instanceof String) buffsList.add((String) item);
                     }
                 }
                 if (configObj2.containsKey("ban") && configObj2.get("ban") instanceof List) {
                     List<?> rawBan = (List<?>) configObj2.get("ban");
                     for (Object item : rawBan) {
-                        if (item instanceof String) {
-                            banList.add((String) item);
-                        }
+                        if (item instanceof String) banList.add((String) item);
                     }
                 }
             } else if (value instanceof List) {
                 List<?> rawBuffs = (List<?>) value;
                 for (Object item : rawBuffs) {
-                    if (item instanceof String) {
-                        buffsList.add((String) item);
-                    }
-                }
-            }
-            buffsMap.put(difficulty, buffsList);
-            banMap.put(difficulty, banList);
-        }
-    }
-    @SuppressWarnings("unchecked")
-    private static void parseBuffPoolWithBan(
-            Map<String, Object> root,
-            String configKey,
-            Map<String, List<String>> buffsMap,
-            Map<String, List<String>> banMap) {
-        if (!root.containsKey(configKey)) {
-            return;
-        }
-        Object configObj = root.get(configKey);
-        if (!(configObj instanceof Map)) {
-            return;
-        }
-        Map<String, Object> rawPool = (Map<String, Object>) configObj;
-        buffsMap.clear();
-        banMap.clear();
-        for (Map.Entry<String, Object> entry : rawPool.entrySet()) {
-            String difficulty = entry.getKey();
-            Object value = entry.getValue();
-            List<String> buffsList = new ArrayList<>();
-            List<String> banList = new ArrayList<>();
-            if (value instanceof Map) {
-                Map<String, Object> configObj2 = (Map<String, Object>) value;
-                if (configObj2.containsKey("buffs") && configObj2.get("buffs") instanceof List) {
-                    List<?> rawBuffs = (List<?>) configObj2.get("buffs");
-                    for (Object item : rawBuffs) {
-                        if (item instanceof String) {
-                            buffsList.add((String) item);
-                        }
-                    }
-                }
-                if (configObj2.containsKey("ban") && configObj2.get("ban") instanceof List) {
-                    List<?> rawBan = (List<?>) configObj2.get("ban");
-                    for (Object item : rawBan) {
-                        if (item instanceof String) {
-                            banList.add((String) item);
-                        }
-                    }
-                }
-            } else if (value instanceof List) {
-                List<?> rawBuffs = (List<?>) value;
-                for (Object item : rawBuffs) {
-                    if (item instanceof String) {
-                        buffsList.add((String) item);
-                    }
+                    if (item instanceof String) buffsList.add((String) item);
                 }
             }
             buffsMap.put(difficulty, buffsList);
@@ -809,13 +663,6 @@ public class ConfigLoader {
         }
         return result;
     }
-    private static float getFloat(Map<String, Object> map, String key, float defaultValue) {
-        Object value = map.get(key);
-        if (value instanceof Number) {
-            return ((Number) value).floatValue();
-        }
-        return defaultValue;
-    }
     private static void createDefaultProbabilityConfig(File configFile) {
         Map<String, Object> defaultProbabilities = new HashMap<>();
         Map<String, Float> enhancerChances = new HashMap<>();
@@ -828,12 +675,12 @@ public class ConfigLoader {
         defaultProbabilities.put("green_gift_drop_chance", 0.35f);
         defaultProbabilities.put("blue_gift_drop_chance", 0.35f);
         defaultProbabilities.put("red_gift_drop_chance", 0.25f);
-        defaultProbabilities.put("enhance_stone_drop_chance_tier1", 0.02f);
-        defaultProbabilities.put("enhance_stone_drop_chance_tier2", 0.05f);
-        defaultProbabilities.put("enhance_stone_drop_chance_tier3", 0.1f);
+        defaultProbabilities.put("enhance_stone_drop_chance_tier1", 0.05f);
+        defaultProbabilities.put("enhance_stone_drop_chance_tier2", 0.20f);
+        defaultProbabilities.put("enhance_stone_drop_chance_tier3", 0.80f);
         try (FileWriter writer = new FileWriter(configFile)) {
             GSON.toJson(defaultProbabilities, writer);
-        } catch (IOException e) {}
+        } catch (IOException ignored) {}
     }
     private static void createDefaultBuffPoolConfig(File configFile) {
         Map<String, Object> defaultBuffPools = new HashMap<>();
@@ -841,23 +688,23 @@ public class ConfigLoader {
         Map<String, Object> easyTierOne = new HashMap<>();
         easyTierOne.put("buffs", Arrays.asList(
                 "frost", "life", "attack", "megaforce", "vampire", "hunger",
-                "death_bomb", "summon", "phantom", "photosynthesis"
+                "death_bomb", "summon", "phantom", "photosynthesis","chaos","inspiration","corrosion","combo"
         ));
-        easyTierOne.put("ban", Arrays.asList());
+        easyTierOne.put("ban", Collections.emptyList());
         tierOneBuffsByDiff.put("easy", easyTierOne);
         Map<String, Object> normalTierOne = new HashMap<>();
         normalTierOne.put("buffs", Arrays.asList(
                 "frost", "life", "attack", "megaforce", "vampire", "hunger",
-                "death_bomb", "summon", "phantom", "photosynthesis"
+                "death_bomb", "summon", "phantom", "photosynthesis","chaos","inspiration","corrosion","combo"
         ));
-        normalTierOne.put("ban", Arrays.asList());
+        normalTierOne.put("ban", Collections.emptyList());
         tierOneBuffsByDiff.put("normal", normalTierOne);
         Map<String, Object> hardTierOne = new HashMap<>();
         hardTierOne.put("buffs", Arrays.asList(
                 "frost", "life", "attack", "megaforce", "vampire", "hunger",
-                "death_bomb", "summon", "phantom", "photosynthesis"
+                "death_bomb", "summon", "phantom", "photosynthesis","chaos","inspiration","corrosion","combo"
         ));
-        hardTierOne.put("ban", Arrays.asList());
+        hardTierOne.put("ban", Collections.emptyList());
         tierOneBuffsByDiff.put("hard", hardTierOne);
         defaultBuffPools.put("tier_one_buffs_by_difficulty", tierOneBuffsByDiff);
         Map<String, Map<String, Object>> tierTwoBuffsByDiff = new HashMap<>();
@@ -865,25 +712,25 @@ public class ConfigLoader {
         easyTierTwo.put("buffs", Arrays.asList(
                 "frost", "life", "attack", "megaforce", "vampire", "rob", "thunder",
                 "ricochet", "harmony", "curse", "thorns", "hunger", "displacement",
-                "death_bomb", "unyielding", "summon", "phantom", "photosynthesis","fasting","aura"
+                "death_bomb", "unyielding", "summon", "phantom", "photosynthesis","fasting","aura","chaos","inspiration","annihilation","spirit_shield","corrosion","combo"
         ));
-        easyTierTwo.put("ban", Arrays.asList());
+        easyTierTwo.put("ban", Collections.emptyList());
         tierTwoBuffsByDiff.put("easy", easyTierTwo);
         Map<String, Object> normalTierTwo = new HashMap<>();
         normalTierTwo.put("buffs", Arrays.asList(
                 "frost", "life", "attack", "megaforce", "vampire", "rob", "thunder",
                 "ricochet", "harmony", "curse", "thorns", "hunger", "displacement",
-                "death_bomb", "unyielding", "summon", "phantom", "photosynthesis","fasting","aura"
+                "death_bomb", "unyielding", "summon", "phantom", "photosynthesis","fasting","aura","chaos","inspiration","annihilation","spirit_shield","corrosion","combo"
         ));
-        normalTierTwo.put("ban", Arrays.asList());
+        normalTierTwo.put("ban", Collections.emptyList());
         tierTwoBuffsByDiff.put("normal", normalTierTwo);
         Map<String, Object> hardTierTwo = new HashMap<>();
         hardTierTwo.put("buffs", Arrays.asList(
                 "frost", "life", "attack", "megaforce", "vampire", "rob", "thunder",
                 "ricochet", "harmony", "curse", "thorns", "hunger", "displacement",
-                "death_bomb", "unyielding", "summon", "phantom", "photosynthesis","fasting","aura"
+                "death_bomb", "unyielding", "summon", "phantom", "photosynthesis","fasting","aura","chaos","inspiration","annihilation","spirit_shield","corrosion","combo"
         ));
-        hardTierTwo.put("ban", Arrays.asList());
+        hardTierTwo.put("ban", Collections.emptyList());
         tierTwoBuffsByDiff.put("hard", hardTierTwo);
         defaultBuffPools.put("tier_two_buffs_by_difficulty", tierTwoBuffsByDiff);
         Map<String, Map<String, Object>> tierThreeBuffsByDiff = new HashMap<>();
@@ -892,27 +739,27 @@ public class ConfigLoader {
                 "frost", "life", "attack", "megaforce", "vampire", "rob", "thunder",
                 "ricochet", "harmony", "curse", "thorns", "aura", "hunger",
                 "displacement", "death_bomb", "tracking", "photosynthesis",
-                "unyielding", "summon", "phantom","fasting"
+                "unyielding", "summon", "phantom","fasting","chaos","inspiration","annihilation","spirit_shield","corrosion","combo"
         ));
-        easyTierThree.put("ban", Arrays.asList());
+        easyTierThree.put("ban", Collections.emptyList());
         tierThreeBuffsByDiff.put("easy", easyTierThree);
         Map<String, Object> normalTierThree = new HashMap<>();
         normalTierThree.put("buffs", Arrays.asList(
                 "frost", "life", "attack", "megaforce", "vampire", "rob", "thunder",
                 "ricochet", "harmony", "curse", "thorns", "aura", "hunger",
                 "displacement", "death_bomb", "tracking", "photosynthesis",
-                "unyielding", "summon", "phantom","fasting"
+                "unyielding", "summon", "phantom","fasting","chaos","inspiration","annihilation","spirit_shield","corrosion","combo"
         ));
-        normalTierThree.put("ban", Arrays.asList());
+        normalTierThree.put("ban", Collections.emptyList());
         tierThreeBuffsByDiff.put("normal", normalTierThree);
         Map<String, Object> hardTierThree = new HashMap<>();
         hardTierThree.put("buffs", Arrays.asList(
                 "frost", "life", "attack", "megaforce", "vampire", "rob", "thunder",
                 "ricochet", "harmony", "curse", "thorns", "aura", "hunger",
                 "displacement", "death_bomb", "tracking", "photosynthesis",
-                "unyielding", "summon", "phantom","fasting"
+                "unyielding", "summon", "phantom","fasting","chaos","inspiration","annihilation","spirit_shield","corrosion","combo"
         ));
-        hardTierThree.put("ban", Arrays.asList());
+        hardTierThree.put("ban", Collections.emptyList());
         tierThreeBuffsByDiff.put("hard", hardTierThree);
         defaultBuffPools.put("tier_three_buffs_by_difficulty", tierThreeBuffsByDiff);
         Map<String, Map<String, List<Number>>> tierOneRangesByDiff = new HashMap<>();
@@ -927,6 +774,10 @@ public class ConfigLoader {
         easyTierOneRanges.put("summon", Arrays.asList(1, 7));
         easyTierOneRanges.put("phantom", Arrays.asList(1, 2));
         easyTierOneRanges.put("photosynthesis", Arrays.asList(1, 2));
+        easyTierOneRanges.put("chaos", Arrays.asList(1, 7));
+        easyTierOneRanges.put("inspiration", Arrays.asList(1, 1));
+        easyTierOneRanges.put("corrosion", Arrays.asList(1, 2));
+        easyTierOneRanges.put("combo", Arrays.asList(1, 2));
         tierOneRangesByDiff.put("easy", easyTierOneRanges);
         Map<String, List<Number>> normalTierOneRanges = new HashMap<>();
         normalTierOneRanges.put("frost", Arrays.asList(1, 10));
@@ -939,6 +790,10 @@ public class ConfigLoader {
         normalTierOneRanges.put("summon", Arrays.asList(5, 10));
         normalTierOneRanges.put("phantom", Arrays.asList(1, 2));
         normalTierOneRanges.put("photosynthesis", Arrays.asList(1, 2));
+        normalTierOneRanges.put("chaos", Arrays.asList(1, 10));
+        normalTierOneRanges.put("inspiration", Arrays.asList(1, 1));
+        normalTierOneRanges.put("corrosion", Arrays.asList(1, 3));
+        normalTierOneRanges.put("combo", Arrays.asList(1, 2));
         tierOneRangesByDiff.put("normal", normalTierOneRanges);
         Map<String, List<Number>> hardTierOneRanges = new HashMap<>();
         hardTierOneRanges.put("frost", Arrays.asList(5, 12));
@@ -951,13 +806,17 @@ public class ConfigLoader {
         hardTierOneRanges.put("summon", Arrays.asList(7, 15));
         hardTierOneRanges.put("phantom", Arrays.asList(3, 4));
         hardTierOneRanges.put("photosynthesis", Arrays.asList(3, 5));
+        hardTierOneRanges.put("chaos", Arrays.asList(5, 12));
+        hardTierOneRanges.put("inspiration", Arrays.asList(1, 1));
+        hardTierOneRanges.put("corrosion", Arrays.asList(1, 4));
+        hardTierOneRanges.put("combo", Arrays.asList(1, 3));
         tierOneRangesByDiff.put("hard", hardTierOneRanges);
         defaultBuffPools.put("tier_one_ranges_by_difficulty", tierOneRangesByDiff);
         Map<String, Map<String, List<Number>>> tierTwoRangesByDiff = new HashMap<>();
         Map<String, List<Number>> easyTierTwoRanges = new HashMap<>();
-        easyTierTwoRanges.put("frost", Arrays.asList(5, 15));
-        easyTierTwoRanges.put("life", Arrays.asList(5, 15));
-        easyTierTwoRanges.put("attack", Arrays.asList(5, 15));
+        easyTierTwoRanges.put("frost", Arrays.asList(7, 15));
+        easyTierTwoRanges.put("life", Arrays.asList(7, 15));
+        easyTierTwoRanges.put("attack", Arrays.asList(7, 15));
         easyTierTwoRanges.put("megaforce", Arrays.asList(3, 7));
         easyTierTwoRanges.put("vampire", Arrays.asList(3, 5));
         easyTierTwoRanges.put("rob", Arrays.asList(1, 2));
@@ -975,6 +834,12 @@ public class ConfigLoader {
         easyTierTwoRanges.put("phantom", Arrays.asList(2, 4));
         easyTierTwoRanges.put("photosynthesis", Arrays.asList(2, 5));
         easyTierTwoRanges.put("fasting", Arrays.asList(1,3));
+        easyTierTwoRanges.put("chaos", Arrays.asList(7,15));
+        easyTierTwoRanges.put("inspiration", Arrays.asList(2,2));
+        easyTierTwoRanges.put("annihilation", Arrays.asList(1,4));
+        easyTierTwoRanges.put("spirit_shield", Arrays.asList(5,10));
+        easyTierTwoRanges.put("corrosion", Arrays.asList(1, 4));
+        easyTierTwoRanges.put("combo", Arrays.asList(2,3));
         tierTwoRangesByDiff.put("easy", easyTierTwoRanges);
         Map<String, List<Number>> normalTierTwoRanges = new HashMap<>();
         normalTierTwoRanges.put("frost", Arrays.asList(5, 20));
@@ -997,6 +862,12 @@ public class ConfigLoader {
         normalTierTwoRanges.put("phantom", Arrays.asList(3, 4));
         normalTierTwoRanges.put("photosynthesis", Arrays.asList(3, 7));
         normalTierTwoRanges.put("fasting", Arrays.asList(1,5));
+        normalTierTwoRanges.put("chaos", Arrays.asList(11,20));
+        normalTierTwoRanges.put("inspiration", Arrays.asList(2,2));
+        normalTierTwoRanges.put("annihilation", Arrays.asList(1,6));
+        normalTierTwoRanges.put("spirit_shield", Arrays.asList(6,12));
+        normalTierTwoRanges.put("corrosion", Arrays.asList(1, 6));
+        normalTierTwoRanges.put("combo", Arrays.asList(2,3));
         tierTwoRangesByDiff.put("normal", normalTierTwoRanges);
         Map<String, List<Number>> hardTierTwoRanges = new HashMap<>();
         hardTierTwoRanges.put("frost", Arrays.asList(10, 25));
@@ -1019,6 +890,12 @@ public class ConfigLoader {
         hardTierTwoRanges.put("phantom", Arrays.asList(4, 6));
         hardTierTwoRanges.put("photosynthesis", Arrays.asList(7, 15));
         hardTierTwoRanges.put("fasting", Arrays.asList(3,8));
+        hardTierTwoRanges.put("chaos", Arrays.asList(15,25));
+        hardTierTwoRanges.put("inspiration", Arrays.asList(2,2));
+        hardTierTwoRanges.put("annihilation", Arrays.asList(3,7));
+        hardTierTwoRanges.put("spirit_shield", Arrays.asList(10,15));
+        hardTierTwoRanges.put("corrosion", Arrays.asList(3,7));
+        hardTierTwoRanges.put("combo", Arrays.asList(2,4));
         tierTwoRangesByDiff.put("hard", hardTierTwoRanges);
         defaultBuffPools.put("tier_two_ranges_by_difficulty", tierTwoRangesByDiff);
         Map<String, Map<String, List<Number>>> tierThreeRangesByDiff = new HashMap<>();
@@ -1044,6 +921,12 @@ public class ConfigLoader {
         easyTierThreeRanges.put("phantom", Arrays.asList(4, 6));
         easyTierThreeRanges.put("photosynthesis", Arrays.asList(5, 10));
         easyTierThreeRanges.put("fasting", Arrays.asList(3,8));
+        easyTierThreeRanges.put("chaos", Arrays.asList(18,24));
+        easyTierThreeRanges.put("inspiration", Arrays.asList(3,3));
+        easyTierThreeRanges.put("annihilation", Arrays.asList(3,7));
+        easyTierThreeRanges.put("spirit_shield", Arrays.asList(10,18));
+        easyTierThreeRanges.put("corrosion", Arrays.asList(3,7));
+        easyTierThreeRanges.put("combo", Arrays.asList(3,5));
         tierThreeRangesByDiff.put("easy", easyTierThreeRanges);
         Map<String, List<Number>> normalTierThreeRanges = new HashMap<>();
         normalTierThreeRanges.put("frost", Arrays.asList(20, 50));
@@ -1067,6 +950,12 @@ public class ConfigLoader {
         normalTierThreeRanges.put("phantom", Arrays.asList(5, 6));
         normalTierThreeRanges.put("photosynthesis", Arrays.asList(8, 15));
         normalTierThreeRanges.put("fasting", Arrays.asList(5,12));
+        normalTierThreeRanges.put("chaos", Arrays.asList(21,30));
+        normalTierThreeRanges.put("inspiration", Arrays.asList(3,3));
+        normalTierThreeRanges.put("annihilation", Arrays.asList(5,8));
+        normalTierThreeRanges.put("spirit_shield", Arrays.asList(12,20));
+        normalTierThreeRanges.put("corrosion", Arrays.asList(5,8));
+        normalTierThreeRanges.put("combo", Arrays.asList(4,5));
         tierThreeRangesByDiff.put("normal", normalTierThreeRanges);
         Map<String, List<Number>> hardTierThreeRanges = new HashMap<>();
         hardTierThreeRanges.put("frost", Arrays.asList(30, 60));
@@ -1074,7 +963,7 @@ public class ConfigLoader {
         hardTierThreeRanges.put("attack", Arrays.asList(30, 60));
         hardTierThreeRanges.put("megaforce", Arrays.asList(15, 40));
         hardTierThreeRanges.put("vampire", Arrays.asList(12, 25));
-        hardTierThreeRanges.put("rob", Arrays.asList(8,20));
+        hardTierThreeRanges.put("rob", Arrays.asList(8,15));
         hardTierThreeRanges.put("displacement", Arrays.asList(5, 15));
         hardTierThreeRanges.put("thunder", Arrays.asList(20, 50));
         hardTierThreeRanges.put("ricochet", Arrays.asList(5, 5));
@@ -1090,10 +979,16 @@ public class ConfigLoader {
         hardTierThreeRanges.put("phantom", Arrays.asList(6, 8));
         hardTierThreeRanges.put("photosynthesis", Arrays.asList(15, 30));
         hardTierThreeRanges.put("fasting", Arrays.asList(8,20));
+        hardTierThreeRanges.put("chaos", Arrays.asList(25,40));
+        hardTierThreeRanges.put("inspiration", Arrays.asList(3,3));
+        hardTierThreeRanges.put("annihilation", Arrays.asList(6,10));
+        hardTierThreeRanges.put("spirit_shield", Arrays.asList(20,30));
+        hardTierThreeRanges.put("corrosion", Arrays.asList(6,10));
+        hardTierThreeRanges.put("combo", Arrays.asList(5,5));
         tierThreeRangesByDiff.put("hard", hardTierThreeRanges);
         defaultBuffPools.put("tier_three_ranges_by_difficulty", tierThreeRangesByDiff);
         try (FileWriter writer = new FileWriter(configFile)) {
             GSON.toJson(defaultBuffPools, writer);
-        } catch (IOException e) {}
+        } catch (IOException ignored) {}
     }
 }

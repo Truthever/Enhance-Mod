@@ -1,0 +1,9 @@
+{
+  "effects": [
+    {
+      "effect": "minecraft:jump_boost",
+      "duration": 12000,
+      "amplifier": 0
+    }
+  ]
+}

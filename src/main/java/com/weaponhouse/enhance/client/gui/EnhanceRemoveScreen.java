@@ -1,4 +1,5 @@
 package com.weaponhouse.enhance.client.gui;
+
 import com.mojang.blaze3d.matrix.MatrixStack;
 import com.weaponhouse.enhance.Enhance;
 import com.weaponhouse.enhance.common.EnhanceCommonRules;
@@ -16,11 +17,10 @@ import net.minecraft.util.text.StringTextComponent;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.fml.common.Mod;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
-@Mod.EventBusSubscriber (modid = "enhance", value = Dist.CLIENT)
 @OnlyIn (Dist.CLIENT)
 public class EnhanceRemoveScreen extends Screen {
     private static final ResourceLocation TEXTURE = new ResourceLocation("enhance", "textures/gui/enhance_remove.png");
@@ -57,7 +57,7 @@ public class EnhanceRemoveScreen extends Screen {
     };
     private static final int HOVER_TEXTURE_X1 = 0;
     private static final int HOVER_TEXTURE_Y1 = 171;
-    private boolean[] isButtonHovered = new boolean[10];
+    private final boolean[] isButtonHovered = new boolean[10];
     private static class BuffInfo {
         public String name;
         public String originalName;
@@ -74,12 +74,11 @@ public class EnhanceRemoveScreen extends Screen {
     public static final String KEY_SCREEN_TITLE_LINE2 = "gui.enhance.remove.title.line2";
     public static final String KEY_NO_BUFF = "gui.enhance.remove.no_buff";
     public static final String KEY_UNKNOWN_PLAYER = "gui.enhance.remove.unknown_player";
-    private List<BuffInfo> buffInfos = new ArrayList<>();
+    private final List<BuffInfo> buffInfos = new ArrayList<>();
+    @OnlyIn (Dist.CLIENT)
     public EnhanceRemoveScreen() {
         super(new StringTextComponent("Enhance Remove"));
-        for (int i = 0; i < isButtonHovered.length; i++) {
-            isButtonHovered[i] = false;
-        }
+        Arrays.fill(isButtonHovered, false);
     }
     public void updateBuffs(List<String> buffs) {
         buffInfos.clear();
@@ -120,7 +119,7 @@ public class EnhanceRemoveScreen extends Screen {
     }
     private String[] parseBuff(String buffString) {
         String[] parts = buffString.split("Lv.");
-        String originalName = "";
+        String originalName;
         String level = "";
         if (parts.length >= 1) {
             originalName = parts[0].trim();
@@ -146,7 +145,7 @@ public class EnhanceRemoveScreen extends Screen {
                 int[] range = EnhanceCommonRules.RED_GIFT_BUFF_RANGES.get(buffName);
                 if (level >= range[0] && level <= range[1]) return 0xFF0000;
             }
-        } catch (NumberFormatException e) {
+        } catch (NumberFormatException ignored) {
         }
         return 0xFFFFFF;
     }
@@ -206,17 +205,17 @@ public class EnhanceRemoveScreen extends Screen {
         int buffAreaTop = guiTop + yOffset;
         matrixStack.push();
         matrixStack.scale(0.8f, 0.8f, 0.8f);
-        float scaledLeft = (buffAreaLeft + width / 2) / 0.8f;
+        float scaledLeft = (buffAreaLeft + (float) width / 2) / 0.8f;
         float scaledTop = buffAreaTop / 0.8f;
         int nameWidth = this.font.getStringWidth(name);
         int nameX = (int) (scaledLeft - nameWidth * 0.8f / 2);
-        int nameY = (int) (scaledTop + (height / 2 - this.font.FONT_HEIGHT * 0.8f));
+        int nameY = (int) (scaledTop + ((float) height / 2 - this.font.FONT_HEIGHT * 0.8f));
         this.font.drawString(matrixStack, name, nameX, nameY, color);
         if (!level.isEmpty()) {
             String levelText = "Lv." + level;
             int levelWidth = this.font.getStringWidth(levelText);
             int levelX = (int) (scaledLeft - levelWidth * 0.8f / 2);
-            int levelY = (int) (scaledTop + (height / 2 + 4));
+            int levelY = (int) (scaledTop + ((float) height / 2 + 4));
             this.font.drawString(matrixStack, levelText, levelX, levelY, color);
         }
         matrixStack.pop();
@@ -339,7 +338,6 @@ public class EnhanceRemoveScreen extends Screen {
             );
         }
     }
-
     private void requestBuffUpdate() {
         Enhance.sendToServer(new RequestBuffPacket());
     }

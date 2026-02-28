@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "A A",
+    "GDG",
+    "GGG"
+  ],
+  "key": {
+    "G": {
+      "item": "enhance:enhance_stone"
+    },
+    "A": {
+      "item": "minecraft:gold_ingot"
+    },
+    "D": {
+      "item": "minecraft:gold_block"
+    }
+  },
+  "result": {
+    "item": "enhance:enhance_land_portal_frame",
+    "count": 1
+  },
+  "group": "enhance"
+}

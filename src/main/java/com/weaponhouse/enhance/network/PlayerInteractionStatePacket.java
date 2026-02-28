@@ -1,11 +1,12 @@
 package com.weaponhouse.enhance.network;
-import com.weaponhouse.enhance.Enhance;
+
 import com.weaponhouse.enhance.session.ServerBlockSession;
 import com.weaponhouse.enhance.session.ServerSessionManager;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.network.PacketBuffer;
 import net.minecraft.util.math.BlockPos;
 import net.minecraftforge.fml.network.NetworkEvent;
+
 import java.util.function.Supplier;
 public class PlayerInteractionStatePacket {
     private final BlockPos sessionPos;

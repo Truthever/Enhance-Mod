@@ -19,9 +19,7 @@ public class ObtainEnhanceStoneTrigger extends AbstractCriterionTrigger<ObtainEn
         return new Instance(entityPredicate);
     }
     public void trigger(ServerPlayerEntity player) {
-        this.triggerListeners(player, instance -> {
-            return instance.test();
-        });
+        this.triggerListeners(player, Instance::test);
     }
     public static class Instance extends CriterionInstance {
         public Instance(EntityPredicate.AndPredicate player) {

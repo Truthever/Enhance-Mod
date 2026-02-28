@@ -42,6 +42,11 @@ public class EnhanceCommonRules {
         put("hunger", new int[]{1, 5});
         put("phantom", new int[]{1, 1});
         put("photosynthesis", new int[]{1, 2});
+        put("combo", new int[]{1, 2});
+        put("corrosion", new int[]{1, 3});
+        put("spirit_shield", new int[]{1, 5});
+        put("chaos", new int[]{1, 10});
+        put("inspiration", new int[]{1, 1});
     }};
     public static final Map<String, int[]> BLUE_GIFT_BUFF_RANGES = new HashMap<String, int []>() {{
         put("frost", new int[]{5, 20});
@@ -54,15 +59,21 @@ public class EnhanceCommonRules {
         put("thunder", new int[]{3, 10});
         put("ricochet", new int[]{1, 1});
         put("harmony", new int[]{1, 5});
-        put("aura", new int[]{3, 4});
-        put("fasting", new int[]{3, 4});
+        put("aura", new int[]{1,5});
+        put("fasting", new int[]{1,5});
         put("curse", new int[]{1, 5});
         put("thorns", new int[]{1, 5});
         put("hunger", new int[]{6, 10});
         put("death_bomb", new int[]{6, 10});
         put("unyielding", new int[]{1, 1});
-        put("phantom", new int[]{3, 4});
+        put("phantom", new int[]{2, 4});
         put("photosynthesis", new int[]{3, 7});
+        put("chaos", new int[]{11, 20});
+        put("inspiration", new int[]{2, 2});
+        put("annihilation", new int[]{1, 6});
+        put("spirit_shield", new int[]{6, 12});
+        put("combo", new int[]{2, 3});
+        put("corrosion", new int[]{1, 6});
     }};
     public static final Map<String, int[]> RED_GIFT_BUFF_RANGES = new HashMap<String, int []>() {{
         put("frost", new int[]{20, 60});
@@ -70,20 +81,26 @@ public class EnhanceCommonRules {
         put("attack", new int[]{20, 60});
         put("megaforce", new int[]{10, 40});
         put("vampire", new int[]{8, 25});
-        put("rob", new int[]{3, 15});
-        put("displacement", new int[]{3, 15});
-        put("thunder", new int[]{10, 50});
-        put("ricochet", new int[]{3, 5});
-        put("harmony", new int[]{10, 45});
+        put("rob", new int[]{4, 15});
+        put("displacement", new int[]{4, 15});
+        put("thunder", new int[]{11, 50});
+        put("ricochet", new int[]{2, 5});
+        put("harmony", new int[]{6, 45});
         put("curse", new int[]{6, 25});
         put("thorns", new int[]{6, 25});
-        put("aura", new int[]{5, 20});
-        put("fasting", new int[]{5, 20});
-        put("hunger", new int[]{15, 50});
-        put("death_bomb", new int[]{10, 40});
-        put("unyielding", new int[]{4, 15});
+        put("aura", new int[]{6, 20});
+        put("fasting", new int[]{6, 20});
+        put("hunger", new int[]{11, 50});
+        put("death_bomb", new int[]{11, 40});
+        put("unyielding", new int[]{2, 15});
         put("phantom", new int[]{5, 8});
         put("photosynthesis", new int[]{8, 25});
+        put("chaos", new int[]{21, 40});
+        put("inspiration", new int[]{3, 3});
+        put("annihilation", new int[]{7, 10});
+        put("spirit_shield", new int[]{13, 30});
+        put("combo", new int[]{4, 5});
+        put("corrosion", new int[]{7, 10});
     }};
     public static boolean isSacrificeableBuff(String buffId) {
         return SACRIFICE_HEALTH_BONUS.containsKey(buffId)

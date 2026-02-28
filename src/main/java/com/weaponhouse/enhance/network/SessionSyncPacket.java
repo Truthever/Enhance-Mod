@@ -1,22 +1,28 @@
 package com.weaponhouse.enhance.network;
 
-import com.weaponhouse.enhance.Enhance;
-import com.weaponhouse.enhance.session.ClientSessionManager;
-import net.minecraft.client.Minecraft;
 import net.minecraft.network.PacketBuffer;
 import net.minecraft.util.math.BlockPos;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.fml.network.NetworkDirection;
 import net.minecraftforge.fml.network.NetworkEvent;
+
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.Supplier;
 public class SessionSyncPacket {
-    private BlockPos blockPos;
-    private Set<UUID> playerUUIDs;
+    private final BlockPos blockPos;
+    private final Set<UUID> playerUUIDs;
     public SessionSyncPacket(BlockPos blockPos, Set<UUID> playerUUIDs) {
         this.blockPos = blockPos;
         this.playerUUIDs = playerUUIDs;
+    }
+    public BlockPos getBlockPos() {
+        return blockPos;
+    }
+    public Set<UUID> getPlayerUUIDs() {
+        return playerUUIDs;
     }
     public static void encode(SessionSyncPacket packet, PacketBuffer buffer) {
         buffer.writeBlockPos(packet.blockPos);
@@ -39,15 +45,7 @@ public class SessionSyncPacket {
             context.get().setPacketHandled(true);
             return;
         }
-        context.get().enqueueWork(() -> {
-            Minecraft mc = Minecraft.getInstance();
-            if (mc.world != null && mc.player != null) {
-                ClientSessionManager.getInstance().updateSession(
-                        packet.blockPos,
-                        packet.playerUUIDs
-                );
-            }
-        });
+        context.get().enqueueWork(() -> DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> ClientPacketHandler.handleSessionSyncPacket(packet.getBlockPos(), packet.getPlayerUUIDs())));
         context.get().setPacketHandled(true);
     }
 }

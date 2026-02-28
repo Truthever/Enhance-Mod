@@ -1,5 +1,6 @@
 
 package com.weaponhouse.enhance.network;
+
 import com.weaponhouse.enhance.enhances.AttackHandler;
 import com.weaponhouse.enhance.enhances.LifeHandler;
 import com.weaponhouse.enhance.session.ServerBlockSession;
@@ -9,6 +10,7 @@ import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.network.PacketBuffer;
 import net.minecraft.util.math.BlockPos;
 import net.minecraftforge.fml.network.NetworkEvent;
+
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.Supplier;
@@ -95,8 +97,8 @@ public class ExchangeBuffPacket {
             int initiatorAttackLevel = initiatorHadAttack ? initiatorBuffs.getInt("attack") : 0;
             int targetLifeLevel = targetHadLife ? targetBuffs.getInt("life") : 0;
             int targetAttackLevel = targetHadAttack ? targetBuffs.getInt("attack") : 0;
-            String buffToExchange = "";
-            int buffLevel = 0;
+            String buffToExchange;
+            int buffLevel;
             switch (packet.direction) {
                 case LEFT_TO_RIGHT:
                     if (initiatorBuffs.contains(packet.initiatorBuffName)) {
@@ -143,8 +145,8 @@ public class ExchangeBuffPacket {
             if (needSyncTargetAttack) {
                 AttackHandler.syncAttackBuff(target);
             }
-            com.weaponhouse.enhance.network.SendBuffPacket.sendBuffData(initiator);
-            com.weaponhouse.enhance.network.SendBuffPacket.sendBuffData(target);
+            SendBuffPacket.sendBuffData(initiator);
+            SendBuffPacket.sendBuffData(target);
         });
         ctx.get().setPacketHandled(true);
     }

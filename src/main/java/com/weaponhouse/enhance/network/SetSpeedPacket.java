@@ -6,6 +6,8 @@ import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.network.PacketBuffer;
 import net.minecraftforge.fml.network.NetworkDirection;
 import net.minecraftforge.fml.network.NetworkEvent;
+
+import java.util.Objects;
 import java.util.function.Supplier;
 public class SetSpeedPacket {
     private final float speed;
@@ -23,7 +25,7 @@ public class SetSpeedPacket {
             ServerPlayerEntity player = ctx.get().getSender();
             if (player != null) {
                 float clampedSpeed = Math.max(0.0F, Math.min(1.0F, msg.speed));
-                player.getAttribute(Attributes.MOVEMENT_SPEED).setBaseValue(clampedSpeed);
+                Objects.requireNonNull(player.getAttribute(Attributes.MOVEMENT_SPEED)).setBaseValue(clampedSpeed);
                 player.getPersistentData().putFloat("BaseMovementSpeed", clampedSpeed);
                 Enhance.INSTANCE.sendTo(new SpeedUpdatedPacket(clampedSpeed), player.connection.getNetworkManager(), NetworkDirection.PLAY_TO_CLIENT);
             }

@@ -1,0 +1,56 @@
+{
+  "multipart": [
+    {
+      "when": {"up": "false", "north": "false", "east": "false", "south": "false", "west": "false"},
+      "apply": [
+        {"model": "enhance:block/eternal_sacred_fire_floor0"},
+        {"model": "enhance:block/eternal_sacred_fire_floor1"}
+      ]
+    },
+    {
+      "when": {"OR": [{"north": "true"}, {"up": "false", "north": "false", "east": "false", "south": "false", "west": "false"}]},
+      "apply": [
+        {"model": "enhance:block/eternal_sacred_fire_side0"},
+        {"model": "enhance:block/eternal_sacred_fire_side1"},
+        {"model": "enhance:block/eternal_sacred_fire_side_alt0"},
+        {"model": "enhance:block/eternal_sacred_fire_side_alt1"}
+      ]
+    },
+    {
+      "when": {"OR": [{"east": "true"}, {"up": "false", "north": "false", "east": "false", "south": "false", "west": "false"}]},
+      "apply": [
+        {"model": "enhance:block/eternal_sacred_fire_side0", "y": 90},
+        {"model": "enhance:block/eternal_sacred_fire_side1", "y": 90},
+        {"model": "enhance:block/eternal_sacred_fire_side_alt0", "y": 90},
+        {"model": "enhance:block/eternal_sacred_fire_side_alt1", "y": 90}
+      ]
+    },
+    {
+      "when": {"OR": [{"south": "true"}, {"up": "false", "north": "false", "east": "false", "south": "false", "west": "false"}]},
+      "apply": [
+        {"model": "enhance:block/eternal_sacred_fire_side0", "y": 180},
+        {"model": "enhance:block/eternal_sacred_fire_side1", "y": 180},
+        {"model": "enhance:block/eternal_sacred_fire_side_alt0", "y": 180},
+        {"model": "enhance:block/eternal_sacred_fire_side_alt1", "y": 180}
+      ]
+    },
+    {
+      "when": {"OR": [{"west": "true"}, {"up": "false", "north": "false", "east": "false", "south": "false", "west": "false"}]},
+      "apply": [
+        {"model": "enhance:block/eternal_sacred_fire_side0", "y": 270},
+        {"model": "enhance:block/eternal_sacred_fire_side1", "y": 270},
+        {"model": "enhance:block/eternal_sacred_fire_side_alt0", "y": 270},
+        {"model": "enhance:block/eternal_sacred_fire_side_alt1", "y": 270}
+      ]
+    },
+    {
+      "when": {"up": "true"},
+      "apply": [
+        {"model": "enhance:block/eternal_sacred_fire_up0"},
+        {"model": "enhance:block/eternal_sacred_fire_up1"},
+        {"model": "enhance:block/eternal_sacred_fire_up_alt0"},
+        {"model": "enhance:block/eternal_sacred_fire_up_alt1"}
+      ]
+    }
+  ]
+}

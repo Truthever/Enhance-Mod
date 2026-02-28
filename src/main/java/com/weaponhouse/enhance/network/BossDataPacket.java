@@ -2,6 +2,7 @@ package com.weaponhouse.enhance.network;
 
 import net.minecraft.network.PacketBuffer;
 import net.minecraftforge.fml.network.NetworkEvent;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -53,6 +54,11 @@ public class BossDataPacket {
     public static void handle(BossDataPacket packet, Supplier<NetworkEvent.Context> context) {
         context.get().enqueueWork(() -> {
             if (context.get().getDirection().getReceptionSide().isClient()) {
+                if (net.minecraft.client.Minecraft.getInstance().world == null ||
+                        net.minecraft.client.Minecraft.getInstance().player == null) {
+                    return;
+                }
+
                 com.weaponhouse.enhance.client.EnhancementHUD.BossData data =
                         new com.weaponhouse.enhance.client.EnhancementHUD.BossData(
                                 packet.modNames, packet.tier, packet.entityType,

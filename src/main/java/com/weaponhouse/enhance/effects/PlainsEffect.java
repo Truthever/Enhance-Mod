@@ -5,13 +5,13 @@ import net.minecraft.entity.ai.attributes.AttributeModifier;
 import net.minecraft.entity.ai.attributes.Attributes;
 import net.minecraft.entity.ai.attributes.ModifiableAttributeInstance;
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.potion.EffectInstance;
 import net.minecraft.potion.EffectType;
 import net.minecraft.util.math.vector.Vector3d;
+
 import java.util.UUID;
 public class PlainsEffect extends BaseEffect {
     private static final UUID SPEED_MODIFIER_UUID = UUID.fromString("1a8c8f6e-0b0a-4e8a-ba07-9b8c9d7e6f5c"); // 速度UUID
-    private static final double MAX_SPEED_BOOST = 1.5;
+    private static final double MAX_SPEED_BOOST = 1.4;
     private static final double MAX_JUMP_BOOST = 1.2;
     private boolean wasOnGround = false;
     public PlainsEffect() {
@@ -76,14 +76,6 @@ public class PlainsEffect extends BaseEffect {
     }
     @Override
     public boolean isReady(int duration, int amplifier) {
-        return true;
-    }
-    @Override
-    public boolean shouldRender(EffectInstance effect) {
-        return true;
-    }
-    @Override
-    public boolean shouldRenderHUD(EffectInstance effect) {
         return true;
     }
 }

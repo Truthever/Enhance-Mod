@@ -1,11 +1,11 @@
 package com.weaponhouse.enhance.events;
 
 import com.weaponhouse.enhance.items.EnhancePickaxeItem;
+import net.minecraft.block.BlockState;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
-import net.minecraft.block.BlockState;
 import net.minecraftforge.event.world.BlockEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -23,6 +23,9 @@ public class EnhancePickaxeEventHandler {
             return;
         }
         if (!EnhancePickaxeItem.isAreaMiningEnabled(heldItem)) {
+            return;
+        }
+        if (!EnhancePickaxeItem.consumeCharge(heldItem, EnhancePickaxeItem.getAreaMiningChargeCost())) {
             return;
         }
         BlockPos centerPos = event.getPos();
@@ -51,9 +54,7 @@ public class EnhancePickaxeEventHandler {
         }
         if (totalBroken > 0) {
             int damageToTake = (totalBroken + 2) / 3;
-            heldItem.damageItem(damageToTake, player, (p) -> {
-                p.sendBreakAnimation(player.getActiveHand());
-            });
+            heldItem.damageItem(damageToTake, player, (p) -> p.sendBreakAnimation(player.getActiveHand()));
         }
     }
 }

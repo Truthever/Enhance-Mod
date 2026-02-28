@@ -1,4 +1,5 @@
 package com.weaponhouse.enhance.session;
+
 import net.minecraft.util.math.BlockPos;
 import java.util.Map;
 import java.util.Set;
@@ -16,7 +17,7 @@ public class ClientSessionManager {
     }
     public void updateSession(BlockPos blockPos, Set<UUID> playerUUIDs) {
         ClientBlockSession session = sessions.computeIfAbsent(blockPos,
-                pos -> new ClientBlockSession(pos)
+                ClientBlockSession::new
         );
         session.updatePlayers(playerUUIDs);
     }

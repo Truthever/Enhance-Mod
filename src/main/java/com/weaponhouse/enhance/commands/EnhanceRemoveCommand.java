@@ -1,5 +1,8 @@
 package com.weaponhouse.enhance.commands;
+
 import com.mojang.brigadier.CommandDispatcher;
+import com.weaponhouse.enhance.enhances.AttackHandler;
+import com.weaponhouse.enhance.enhances.LifeHandler;
 import net.minecraft.command.CommandSource;
 import net.minecraft.command.Commands;
 import net.minecraft.command.arguments.EntityArgument;
@@ -9,12 +12,9 @@ import net.minecraft.entity.ai.attributes.Attributes;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraft.util.text.TranslationTextComponent;
-import com.weaponhouse.enhance.enhances.LifeHandler;
-import com.weaponhouse.enhance.enhances.AttackHandler;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
-
 public class EnhanceRemoveCommand {
     private static final Map<String, String> REMOVABLE_BUFFS = new HashMap<>();
     static {
@@ -40,7 +40,14 @@ public class EnhanceRemoveCommand {
         REMOVABLE_BUFFS.put("photosynthesis", "photosynthesis");
         REMOVABLE_BUFFS.put("enhance_level", "enhance_level");
         REMOVABLE_BUFFS.put("fasting", "fasting");
+        REMOVABLE_BUFFS.put("chaos", "chaos");
+        REMOVABLE_BUFFS.put("inspiration", "inspiration");
+        REMOVABLE_BUFFS.put("annihilation", "annihilation");
+        REMOVABLE_BUFFS.put("spirit_shield", "spirit_shield");
+        REMOVABLE_BUFFS.put("corrosion", "corrosion");
+        REMOVABLE_BUFFS.put("combo", "combo");
     }
+
     public static void register(CommandDispatcher<CommandSource> dispatcher) {
         com.mojang.brigadier.builder.LiteralArgumentBuilder<CommandSource> baseCommand = Commands.literal("enhanceremove")
                 .requires(source -> source.hasPermissionLevel(2))
@@ -49,6 +56,7 @@ public class EnhanceRemoveCommand {
                                 ctx.getSource(),
                                 EntityArgument.getEntities(ctx, "targets")
                         )));
+
         for (Map.Entry<String, String> entry : REMOVABLE_BUFFS.entrySet()) {
             String buffType = entry.getKey();
             String buffLangKey = entry.getValue();
@@ -74,17 +82,9 @@ public class EnhanceRemoveCommand {
                 if (data.contains(EnhanceCommand.BUFF_TAG)) {
                     CompoundNBT buffs = data.getCompound(EnhanceCommand.BUFF_TAG);
                     int countBefore = buffs.keySet().size();
-                    if (isSacrificeableBuff(buffs)) {
-                        LifeHandler.restoreOriginalMaxHealth(
-                                living,
-                                living.getAttribute(Attributes.MAX_HEALTH)
-                        );
-                    }
-                    if (buffs.contains("attack")) {
-                        AttackHandler.restoreOriginalAttack(
-                                living,
-                                living.getAttribute(Attributes.ATTACK_DAMAGE)
-                        );
+                    for (String buffType : buffs.keySet()) {
+                        handleSpecialBuffRemoval(living, buffType, true);
+                        purgeDerivedTags(living, buffType);
                     }
                     buffs = new CompoundNBT();
                     data.put(EnhanceCommand.BUFF_TAG, buffs);
@@ -117,18 +117,8 @@ public class EnhanceRemoveCommand {
                 if (data.contains(EnhanceCommand.BUFF_TAG)) {
                     CompoundNBT buffs = data.getCompound(EnhanceCommand.BUFF_TAG);
                     if (buffs.contains(buffType)) {
-                        if (isSacrificeableBuff(buffType)) {
-                            LifeHandler.restoreOriginalMaxHealth(
-                                    living,
-                                    living.getAttribute(Attributes.MAX_HEALTH)
-                            );
-                        }
-                        if ("attack".equals(buffType)) {
-                            AttackHandler.restoreOriginalAttack(
-                                    living,
-                                    living.getAttribute(Attributes.ATTACK_DAMAGE)
-                            );
-                        }
+                        handleSpecialBuffRemoval(living, buffType, false);
+                        purgeDerivedTags(living, buffType);
                         buffs.remove(buffType);
                         data.put(EnhanceCommand.BUFF_TAG, buffs);
                         removedCount++;
@@ -152,19 +142,51 @@ public class EnhanceRemoveCommand {
         }
         return removedCount;
     }
-    private static boolean isSacrificeableBuff(CompoundNBT buffs) {
-        for (String key : buffs.keySet()) {
-            if (isSacrificeableBuff(key)) {
-                return true;
-            }
+    private static void handleSpecialBuffRemoval(LivingEntity living, String buffType, boolean isRemoveAll) {
+        switch (buffType) {
+            case "life":
+            case "photosynthesis":
+            case "vampire":
+            case "curse":
+            case "unyielding":
+                LifeHandler.restoreOriginalMaxHealth(living, living.getAttribute(Attributes.MAX_HEALTH));
+                break;
+            case "attack":
+                AttackHandler.restoreOriginalAttack(living, living.getAttribute(Attributes.ATTACK_DAMAGE));
+                break;
+            case "inspiration":
+                if (!isRemoveAll) {
+                    clearInspirationMarkers(living);
+                }
+                break;
         }
-        return false;
     }
-    private static boolean isSacrificeableBuff(String buffType) {
-        return "life".equals(buffType)
-                || "photosynthesis".equals(buffType)
-                || "vampire".equals(buffType)
-                || "curse".equals(buffType)
-                || "unyielding".equals(buffType);
+    private static void purgeDerivedTags(LivingEntity living, String buffType) {
+        CompoundNBT data = living.getPersistentData();
+        switch (buffType) {
+            case "life":
+            case "photosynthesis":
+            case "vampire":
+            case "curse":
+            case "unyielding":
+                if (data.contains("BaseMaxHealth")) data.remove("BaseMaxHealth");
+                break;
+
+            case "attack":
+                if (data.contains("BaseAttackDamage")) data.remove("BaseAttackDamage");
+                break;
+
+            case "inspiration":
+                if (data.contains("InspirationMarker")) data.remove("InspirationMarker");
+                break;
+            default:
+                break;
+        }
+    }
+    private static void clearInspirationMarkers(LivingEntity entity) {
+        CompoundNBT data = entity.getPersistentData();
+        if (data.contains("InspirationMarker")) {
+            data.remove("InspirationMarker");
+        }
     }
 }

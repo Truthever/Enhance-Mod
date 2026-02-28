@@ -1,11 +1,11 @@
 package com.weaponhouse.enhance.items;
+
 import com.weaponhouse.enhance.util.RegistryHandler;
 import net.minecraft.client.util.ITooltipFlag;
 import net.minecraft.enchantment.Enchantment;
 import net.minecraft.enchantment.Enchantments;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.EnchantedBookItem;
 import net.minecraft.item.IItemTier;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.ShovelItem;
@@ -15,17 +15,17 @@ import net.minecraft.util.ActionResult;
 import net.minecraft.util.ActionResultType;
 import net.minecraft.util.Hand;
 import net.minecraft.util.text.ITextComponent;
-import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraft.util.text.TextFormatting;
+import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraft.world.World;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.common.ToolType;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
 import javax.annotation.Nullable;
 import java.util.List;
+import java.util.Objects;
+
 public class EnhanceShovelItem extends ShovelItem {
-    private static final Logger LOGGER = LogManager.getLogger();
     private static final String INITIALIZED_TAG = "enhance_shovel_initialized";
     public static final String AUTO_SMELT_TAG = "enhance_shovel_auto_smelt";
     private static final Enchantment KNOCKBACK_ENCHANT = Enchantments.KNOCKBACK;
@@ -77,7 +77,7 @@ public class EnhanceShovelItem extends ShovelItem {
         for (int i = 0; i < enchantList.size(); i++) {
             CompoundNBT enchantNBT = enchantList.getCompound(i);
             String enchantId = enchantNBT.getString("id");
-            if (enchantId.equals(KNOCKBACK_ENCHANT.getRegistryName().toString())) {
+            if (enchantId.equals(Objects.requireNonNull(KNOCKBACK_ENCHANT.getRegistryName()).toString())) {
                 enchantNBT.putInt("lvl", KNOCKBACK_LEVEL);
                 hasKnockback = true;
                 break;
@@ -85,13 +85,14 @@ public class EnhanceShovelItem extends ShovelItem {
         }
         if (!hasKnockback) {
             CompoundNBT newEnchantNBT = new CompoundNBT();
-            newEnchantNBT.putString("id", KNOCKBACK_ENCHANT.getRegistryName().toString());
+            newEnchantNBT.putString("id", Objects.requireNonNull(KNOCKBACK_ENCHANT.getRegistryName()).toString());
             newEnchantNBT.putInt("lvl", KNOCKBACK_LEVEL);
             enchantList.add(newEnchantNBT);
         }
         stack.setTag(stackNBT);
     }
     @Override
+    @OnlyIn(Dist.CLIENT)
     public void addInformation(ItemStack stack, @Nullable World worldIn, List<ITextComponent> tooltip, ITooltipFlag flagIn) {
         super.addInformation(stack, worldIn, tooltip, flagIn);
         tooltip.add(new TranslationTextComponent("tooltip.enhance_shovel.base_info")
@@ -116,10 +117,16 @@ public class EnhanceShovelItem extends ShovelItem {
                 .mergeStyle(TextFormatting.GRAY));
     }
     public static boolean isInitialized(ItemStack stack) {
-        return stack != null && stack.hasTag() && stack.getTag().getBoolean(INITIALIZED_TAG);
+        if (stack.getTag() != null) {
+            return stack.hasTag() && stack.getTag().getBoolean(INITIALIZED_TAG);
+        }
+        return false;
     }
     public static boolean isAutoSmeltEnabled(ItemStack stack) {
-        return stack != null && stack.hasTag() && stack.getTag().getBoolean(AUTO_SMELT_TAG);
+        if (stack.getTag() != null) {
+            return stack.hasTag() && stack.getTag().getBoolean(AUTO_SMELT_TAG);
+        }
+        return false;
     }
     @Override
     public boolean getIsRepairable(ItemStack toRepair, ItemStack repair) {

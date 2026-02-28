@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "AAA",
+    "GGG",
+    "AAA"
+  ],
+  "key": {
+    "G": {
+      "item": "enhance:enhance_dust"
+    },
+    "A": {
+      "item": "minecraft:sugar"
+    }
+  },
+  "result": {
+    "item": "enhance:enhance_candy",
+    "count": 1
+  },
+  "group": "gift_crafting"
+}

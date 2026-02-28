@@ -1,4 +1,5 @@
 package com.weaponhouse.enhance.session;
+
 import net.minecraft.util.math.BlockPos;
 import java.util.HashSet;
 import java.util.Set;
@@ -23,5 +24,8 @@ public class ClientBlockSession {
     }
     public Set<UUID> getPlayers() {
         return new HashSet<>(playerUUIDs);
+    }
+    public BlockPos getBlockPos() {
+        return blockPos;
     }
 }

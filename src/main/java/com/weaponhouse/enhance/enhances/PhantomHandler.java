@@ -3,24 +3,19 @@ package com.weaponhouse.enhance.enhances;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.nbt.CompoundNBT;
+import net.minecraft.particles.RedstoneParticleData;
 import net.minecraft.util.DamageSource;
-import net.minecraft.util.SoundEvents;
 import net.minecraft.util.SoundCategory;
+import net.minecraft.util.SoundEvents;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraft.world.server.ServerWorld;
-import net.minecraft.particles.RedstoneParticleData;
 import net.minecraftforge.event.entity.living.LivingAttackEvent;
-import net.minecraftforge.eventbus.api.EventPriority;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
 import java.util.Random;
-@Mod.EventBusSubscriber(modid = "enhance")
 public class PhantomHandler {
     private static final Random RANDOM = new Random();
     private static final String BUFF_TAG = "WeaponHouseBuffs";
     private static final String PHANTOM_TAG = "phantom";
-    @SubscribeEvent(priority = EventPriority.HIGH)
     public static void onLivingAttack(LivingAttackEvent event) {
         LivingEntity entity = event.getEntityLiving();
         if (entity.world.isRemote) return;

@@ -9,12 +9,8 @@ import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.util.DamageSource;
 import net.minecraft.util.SoundEvents;
 import net.minecraftforge.event.entity.living.LivingHurtEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
-@Mod.EventBusSubscriber(modid = "enhance")
 public class RobHandler {
     private static final int PICKUP_DELAY = 40;
-    @SubscribeEvent
     public static void onLivingHurt(LivingHurtEvent event) {
         DamageSource source = event.getSource();
         if (source instanceof ThornsHandler.ThornsDamageSource) {

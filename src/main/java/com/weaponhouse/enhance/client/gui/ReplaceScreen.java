@@ -17,21 +17,14 @@ import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.SoundEvents;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.StringTextComponent;
 import net.minecraft.util.text.TranslationTextComponent;
-import net.minecraft.util.math.BlockPos;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.fml.common.Mod;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
-@Mod.EventBusSubscriber (modid = "enhance", value = Dist.CLIENT)
+import java.util.*;
 @OnlyIn (Dist.CLIENT)
 public class ReplaceScreen extends Screen {
     private static final ResourceLocation TEXTURE = new ResourceLocation("enhance", "textures/gui/replace.png");
@@ -50,7 +43,7 @@ public class ReplaceScreen extends Screen {
     private static final int[][] MID_RIGHT_BUTTONS = {
             {101, 35, 117, 46}, {101, 59, 117, 70}, {101, 82, 117, 93}, {101, 107, 117, 118}, {101, 130, 117, 141}
     };
-    private boolean[][] isExchangeBtnEnabled = new boolean[5][2];
+    private final boolean[][] isExchangeBtnEnabled = new boolean[5][2];
     private static final int[] CURRENT_LEFT_ARROW_SCREEN = {7, 150, 28, 164};
     private static final int[] CURRENT_RIGHT_ARROW_SCREEN = {33, 150, 56, 164};
     private static final int[] OTHER_LEFT_ARROW_SCREEN = {145, 150, 166, 164};
@@ -90,13 +83,14 @@ public class ReplaceScreen extends Screen {
             this.color = color;
         }
     }
-    private List<BuffInfo> currentBuffInfos = new ArrayList<>();
-    private List<BuffInfo> otherBuffInfos = new ArrayList<>();
-    private PlayerEntity currentPlayer;
+    private final List<BuffInfo> currentBuffInfos = new ArrayList<>();
+    private final List<BuffInfo> otherBuffInfos = new ArrayList<>();
+    private final PlayerEntity currentPlayer;
     private UUID otherPlayerUUID = null;
     private boolean isClosed = false;
     private Thread otherBuffSyncThread = null;
-    private SessionData sessionData = new SessionData();
+    private final SessionData sessionData = new SessionData();
+    @OnlyIn (Dist.CLIENT)
     public ReplaceScreen(BlockPos blockPos) {
         super(new TranslationTextComponent("gui.enhance.replace.title"));
         this.currentPlayer = Minecraft.getInstance().player;
@@ -106,7 +100,6 @@ public class ReplaceScreen extends Screen {
         updateSessionPlayers();
         startOtherBuffSyncTask();
     }
-
     @Override
     protected void init() {
         super.init();
@@ -194,7 +187,7 @@ public class ReplaceScreen extends Screen {
                         .filter(uuid -> !uuid.equals(currentPlayer.getUniqueID()))
                         .findFirst()
                         .orElse(null);
-                if (!java.util.Objects.equals(newOtherUUID, otherPlayerUUID)) {
+                if (!Objects.equals(newOtherUUID, otherPlayerUUID)) {
                     otherPlayerUUID = newOtherUUID;
                     otherBuffInfos.clear();
                     totalOtherBuffs = 0;
@@ -209,7 +202,9 @@ public class ReplaceScreen extends Screen {
         super.render(matrixStack, mouseX, mouseY, partialTicks);
         int guiLeft = (this.width - DISPLAY_WIDTH) / 2;
         int guiTop = (this.height - DISPLAY_HEIGHT) / 2;
-        this.minecraft.getTextureManager().bindTexture(TEXTURE);
+        if (this.minecraft != null) {
+            this.minecraft.getTextureManager().bindTexture(TEXTURE);
+        }
         this.blit(matrixStack, guiLeft, guiTop, 0, 0, DISPLAY_WIDTH, DISPLAY_HEIGHT);
         updateSessionPlayers();
         updateExchangeBtnStates();
@@ -261,7 +256,9 @@ public class ReplaceScreen extends Screen {
         matrixStack.pop();
     }
     private void renderExchangeButtons(MatrixStack matrixStack, int guiLeft, int guiTop) {
-        this.minecraft.getTextureManager().bindTexture(TEXTURE);
+        if (this.minecraft != null) {
+            this.minecraft.getTextureManager().bindTexture(TEXTURE);
+        }
         for (int i = 0; i < PAGE_SIZE; i++) {
             if (isExchangeBtnEnabled[i][0]) {
                 int[] btnCoords = MID_LEFT_BUTTONS[i];
@@ -307,7 +304,7 @@ public class ReplaceScreen extends Screen {
         int buffAreaTop = guiTop + y1;
         matrixStack.push();
         matrixStack.scale(0.8f, 0.8f, 0.8f);
-        float scaledLeft = (buffAreaLeft + width / 2) / 0.8f;
+        float scaledLeft = (buffAreaLeft + (float) width / 2) / 0.8f;
         float scaledTop = buffAreaTop / 0.8f;
         ITextComponent waitingTextComp;
         if (totalOtherBuffs > 0) {
@@ -318,7 +315,7 @@ public class ReplaceScreen extends Screen {
         int textColor = totalOtherBuffs > 0 ? 0xFF555555 : 0xAAAAAA; // 退出：浅红，等待：浅灰
         int textWidth = this.font.getStringWidth(waitingTextComp.getString());
         int textX = (int) (scaledLeft - (textWidth * 0.8f) / 2);
-        int textY = (int) (scaledTop + (height / 2 - this.font.FONT_HEIGHT * 0.8f));
+        int textY = (int) (scaledTop + ((float) height / 2 - this.font.FONT_HEIGHT * 0.8f));
         this.font.drawString(matrixStack, waitingTextComp.getString(), textX, textY, textColor);
         matrixStack.pop();
     }
@@ -352,11 +349,11 @@ public class ReplaceScreen extends Screen {
         int buffAreaTop = guiTop + yOffset;
         matrixStack.push();
         matrixStack.scale(0.8f, 0.8f, 0.8f);
-        float scaledLeft = (buffAreaLeft + width / 2) / 0.8f;
+        float scaledLeft = (buffAreaLeft + (float) width / 2) / 0.8f;
         float scaledTop = buffAreaTop / 0.8f;
         int nameWidth = this.font.getStringWidth(name);
         int nameX = (int) (scaledLeft - (nameWidth * 0.8f) / 2);
-        int nameY = (int) (scaledTop + (height / 2 - this.font.FONT_HEIGHT * 0.8f));
+        int nameY = (int) (scaledTop + ((float) height / 2 - this.font.FONT_HEIGHT * 0.8f));
         this.font.drawString(matrixStack, name, nameX, nameY, color);
         if (!level.isEmpty()) {
             ITextComponent levelComp = new TranslationTextComponent("gui.enhance.replace.level_prefix", level);
@@ -379,7 +376,9 @@ public class ReplaceScreen extends Screen {
                                         int total, boolean leftEnabled, boolean rightEnabled,
                                         int[] leftScreen, int[] rightScreen) {
         if (total <= PAGE_SIZE) return;
-        this.minecraft.getTextureManager().bindTexture(TEXTURE);
+        if (this.minecraft != null) {
+            this.minecraft.getTextureManager().bindTexture(TEXTURE);
+        }
         if (leftEnabled) {
             int screenX = guiLeft + leftScreen[0];
             int screenY = guiTop + leftScreen[1];
@@ -514,7 +513,7 @@ public class ReplaceScreen extends Screen {
     }
     private String[] parseBuff(String buffString) {
         String[] parts = buffString.split("Lv.");
-        String originalName = "";
+        String originalName;
         String level = "";
         if (parts.length >= 1) {
             originalName = parts[0].trim();
@@ -533,7 +532,7 @@ public class ReplaceScreen extends Screen {
             if (isGreenBuffLevel(buffName, level)) return 0x4FFF00;
             if (isBlueBuffLevel(buffName, level)) return 0x0000FF;
             if (isRedBuffLevel(buffName, level)) return 0xFF0000;
-        } catch (NumberFormatException e) {}
+        } catch (NumberFormatException ignored) {}
         return 0xFFFFFF;
     }
     private boolean isGreenBuffLevel(String buffName, int level) {
@@ -606,7 +605,7 @@ public class ReplaceScreen extends Screen {
     public void handleSessionStateUpdate(Map<UUID, Boolean> interactionStates, UUID disconnectedPlayer) {
         sessionData.updateInteractionStates(interactionStates);
         if (disconnectedPlayer != null) {
-            if (otherPlayerUUID != null && disconnectedPlayer.equals(otherPlayerUUID)) {
+            if (disconnectedPlayer.equals(otherPlayerUUID)) {
                 ClientSessionManager.getInstance().removePlayerFromSession(blockPos, disconnectedPlayer);
                 otherBuffInfos.clear();
                 totalOtherBuffs = 0;

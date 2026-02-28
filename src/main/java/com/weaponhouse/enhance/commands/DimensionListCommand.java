@@ -1,4 +1,5 @@
 package com.weaponhouse.enhance.commands;
+
 import com.mojang.brigadier.CommandDispatcher;
 import net.minecraft.command.CommandSource;
 import net.minecraft.command.Commands;
@@ -8,6 +9,7 @@ import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraft.world.World;
 import net.minecraft.world.server.ServerWorld;
 import net.minecraftforge.fml.server.ServerLifecycleHooks;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;

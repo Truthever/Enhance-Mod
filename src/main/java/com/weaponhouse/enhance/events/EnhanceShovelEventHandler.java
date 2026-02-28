@@ -1,5 +1,8 @@
 package com.weaponhouse.enhance.events;
+
 import com.weaponhouse.enhance.items.EnhanceShovelItem;
+import net.minecraft.block.Block;
+import net.minecraft.block.BlockState;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.crafting.IRecipe;
@@ -7,11 +10,10 @@ import net.minecraft.item.crafting.Ingredient;
 import net.minecraft.item.crafting.RecipeManager;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
 import net.minecraftforge.event.world.BlockEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
+
 import java.util.Iterator;
 @Mod.EventBusSubscriber(modid = "enhance")
 public class EnhanceShovelEventHandler {

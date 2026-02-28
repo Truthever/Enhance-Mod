@@ -7,12 +7,10 @@ import net.minecraft.particles.ParticleTypes;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraft.world.World;
-import net.minecraftforge.event.entity.living.LivingHurtEvent;
 import net.minecraftforge.event.entity.living.LivingEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.event.entity.living.LivingHurtEvent;
+
 import java.util.Random;
-@Mod.EventBusSubscriber(modid = "enhance")
 public class UnyieldingHandler {
     private static final String BUFF_TAG = "WeaponHouseBuffs";
     private static final String UNYIELDING_TAG = "unyielding";
@@ -20,7 +18,6 @@ public class UnyieldingHandler {
     private static final int SECONDS_PER_LEVEL = 2;
     private static final int MAX_INVINCIBLE_SECONDS = 30;
     private static final String INVINCIBLE_TICK_TAG = "UnyieldingInvincibleTicks";
-    @SubscribeEvent
     public static void onLivingHurt(LivingHurtEvent event) {
         LivingEntity entity = event.getEntityLiving();
         World world = entity.world;
@@ -29,7 +26,7 @@ public class UnyieldingHandler {
             event.setCanceled(true);
             return;
         }
-        if (world.isRemote || !hasUnyieldingBuff(entity)) {
+        if (world.isRemote || hasUnyieldingBuff(entity)) {
             return;
         }
         float currentHealth = entity.getHealth();
@@ -63,7 +60,6 @@ public class UnyieldingHandler {
         }
         spawnUnyieldingParticles(entity);
     }
-    @SubscribeEvent
     public static void onLivingUpdate(LivingEvent.LivingUpdateEvent event) {
         LivingEntity entity = event.getEntityLiving();
         World world = entity.world;
@@ -83,12 +79,12 @@ public class UnyieldingHandler {
     }
     public static boolean hasUnyieldingBuff(LivingEntity entity) {
         CompoundNBT entityData = entity.getPersistentData();
-        return entityData.contains(BUFF_TAG) &&
-                entityData.getCompound(BUFF_TAG).contains(UNYIELDING_TAG) &&
-                entityData.getCompound(BUFF_TAG).getInt(UNYIELDING_TAG) > 0;
+        return !entityData.contains(BUFF_TAG) ||
+                !entityData.getCompound(BUFF_TAG).contains(UNYIELDING_TAG) ||
+                entityData.getCompound(BUFF_TAG).getInt(UNYIELDING_TAG) <= 0;
     }
     public static int getUnyieldingLevel(LivingEntity entity) {
-        if (!hasUnyieldingBuff(entity)) {
+        if (hasUnyieldingBuff(entity)) {
             return 0;
         }
         CompoundNBT buffs = entity.getPersistentData().getCompound(BUFF_TAG);
@@ -100,6 +96,7 @@ public class UnyieldingHandler {
             CompoundNBT buffs = entityData.getCompound(BUFF_TAG);
             buffs.remove(UNYIELDING_TAG);
             entityData.put(BUFF_TAG, buffs);
+            BossBarHandler.createOrUpdateBossBar(entity);
         }
     }
     public static boolean isInUnyieldingInvincible(LivingEntity entity) {

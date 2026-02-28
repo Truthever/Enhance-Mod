@@ -8,27 +8,23 @@ import net.minecraft.world.LightType;
 import net.minecraft.world.World;
 import net.minecraft.world.server.ServerWorld;
 import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
 
 import java.util.List;
 import java.util.Random;
 import java.util.stream.Collectors;
-@Mod.EventBusSubscriber(modid = "enhance")
 public class PhotosynthesisHandler {
     private static final Random RANDOM = new Random();
     private static final String BUFF_TAG = "WeaponHouseBuffs";
     private static final String PHOTOSYNTHESIS_TAG = "photosynthesis";
     private static final int CHECK_INTERVAL = 20;
     private static final int MIN_LIGHT_LEVEL = 9;
-    @SubscribeEvent
     public static void onPlayerTick(TickEvent.PlayerTickEvent event) {
         if (event.phase != TickEvent.Phase.END) return;
         PlayerEntity player = event.player;
         World world = player.world;
         if (world.isRemote) return;
         if (player.ticksExisted % CHECK_INTERVAL != 0) return;
-        if (!hasPhotosynthesisBuff(player)) return;
+        if (hasPhotosynthesisBuff(player)) return;
         int photosynthesisLevel = getPhotosynthesisLevel(player);
         if (getLightLevel(player) >= MIN_LIGHT_LEVEL) {
             float healAmount = 0.5f * photosynthesisLevel;
@@ -36,7 +32,6 @@ public class PhotosynthesisHandler {
             spawnSunlightParticles((ServerWorld) world, player);
         }
     }
-    @SubscribeEvent
     public static void onEntityTick(TickEvent.WorldTickEvent event) {
         if (event.phase != TickEvent.Phase.END) return;
         if (event.world.isRemote) return;
@@ -48,7 +43,7 @@ public class PhotosynthesisHandler {
                 .collect(Collectors.toList());
         for (LivingEntity entity : entities) {
             if (entity instanceof PlayerEntity) continue;
-            if (!hasPhotosynthesisBuff(entity)) continue;
+            if (hasPhotosynthesisBuff(entity)) continue;
             int photosynthesisLevel = getPhotosynthesisLevel(entity);
             if (getLightLevel(entity) >= MIN_LIGHT_LEVEL) {
                 float healAmount = 0.5f * photosynthesisLevel;
@@ -66,9 +61,9 @@ public class PhotosynthesisHandler {
     }
     private static boolean hasPhotosynthesisBuff(LivingEntity entity) {
         if (!entity.getPersistentData().contains(BUFF_TAG)) {
-            return false;
+            return true;
         }
-        return entity.getPersistentData().getCompound(BUFF_TAG).contains(PHOTOSYNTHESIS_TAG);
+        return !entity.getPersistentData().getCompound(BUFF_TAG).contains(PHOTOSYNTHESIS_TAG);
     }
     private static int getPhotosynthesisLevel(LivingEntity entity) {
         if (entity.getPersistentData().contains(BUFF_TAG)) {

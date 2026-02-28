@@ -1,8 +1,11 @@
 package com.weaponhouse.enhance.commands;
+
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.weaponhouse.enhance.enhances.AttackHandler;
+import com.weaponhouse.enhance.enhances.BossBarHandler;
 import com.weaponhouse.enhance.enhances.LifeHandler;
+import com.weaponhouse.enhance.enhances.SpiritShieldHandler;
 import net.minecraft.command.CommandSource;
 import net.minecraft.command.Commands;
 import net.minecraft.command.arguments.EntityArgument;
@@ -12,6 +15,7 @@ import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.util.text.StringTextComponent;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraft.util.text.TranslationTextComponent;
+
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
@@ -38,8 +42,8 @@ public class EnhanceCommand {
         BUFF_CONFIG.put("megaforce", new BuffInfo("megaforce", 1, Integer.MAX_VALUE));
         BUFF_CONFIG.put("thunder", new BuffInfo("thunder", 1, Integer.MAX_VALUE));
         BUFF_CONFIG.put("frost", new BuffInfo("frost", 1, Integer.MAX_VALUE));
-        BUFF_CONFIG.put("ricochet", new BuffInfo("ricochet", 1, 5));
-        BUFF_CONFIG.put("harmony", new BuffInfo("harmony", 1, 20));
+        BUFF_CONFIG.put("ricochet", new BuffInfo("ricochet", 1, Integer.MAX_VALUE));
+        BUFF_CONFIG.put("harmony", new BuffInfo("harmony", 1, Integer.MAX_VALUE));
         BUFF_CONFIG.put("curse", new BuffInfo("curse", 1, Integer.MAX_VALUE));
         BUFF_CONFIG.put("life", new BuffInfo("life", 1, Integer.MAX_VALUE));
         BUFF_CONFIG.put("thorns", new BuffInfo("thorns", 1, Integer.MAX_VALUE));
@@ -55,6 +59,12 @@ public class EnhanceCommand {
         BUFF_CONFIG.put("photosynthesis", new BuffInfo("photosynthesis", 1, Integer.MAX_VALUE));
         BUFF_CONFIG.put(ENHANCE_LEVEL_TAG, new BuffInfo("enhance_level", 1, MAX_ENHANCE_LEVEL));
         BUFF_CONFIG.put("fasting", new BuffInfo("fasting", 1, Integer.MAX_VALUE));
+        BUFF_CONFIG.put("chaos", new BuffInfo("chaos", 1, Integer.MAX_VALUE));
+        BUFF_CONFIG.put("inspiration", new BuffInfo("inspiration", 1, 3));
+        BUFF_CONFIG.put("annihilation", new BuffInfo("annihilation", 1, 10));
+        BUFF_CONFIG.put("spirit_shield", new BuffInfo("spirit_shield", 1, Integer.MAX_VALUE));
+        BUFF_CONFIG.put("corrosion", new BuffInfo("corrosion", 1, 10));
+        BUFF_CONFIG.put("combo", new BuffInfo("combo", 1, Integer.MAX_VALUE));
     }
     public static void register(CommandDispatcher<CommandSource> dispatcher) {
         com.mojang.brigadier.builder.LiteralArgumentBuilder<CommandSource> enhanceCommand = Commands.literal("enhance")
@@ -89,17 +99,22 @@ public class EnhanceCommand {
         targets.stream()
                 .filter(e -> e instanceof LivingEntity)
                 .forEach(entity -> {
-                    CompoundNBT data = ((LivingEntity) entity).getPersistentData();
+                    CompoundNBT data = entity.getPersistentData();
                     CompoundNBT buffs = data.contains(BUFF_TAG) ? data.getCompound(BUFF_TAG) : new CompoundNBT();
                     buffs.putInt(buffType, level);
                     data.put(BUFF_TAG, buffs);
                     LivingEntity livingEntity = (LivingEntity) entity;
-
                     if ("life".equals(buffType)) {
                         LifeHandler.applyLifeBuff(livingEntity);
                     }
                     if ("attack".equals(buffType)) {
                         AttackHandler.applyAttackBuff(livingEntity);
+                    }
+                    if ("spirit_shield".equals(buffType)) {
+                        SpiritShieldHandler.initializeSpiritShield(livingEntity);
+                    }
+                    if (!(entity instanceof net.minecraft.entity.player.PlayerEntity)) {
+                        BossBarHandler.createOrUpdateBossBar(livingEntity);
                     }
                     TranslationTextComponent feedback = new TranslationTextComponent(
                             KEY_FEEDBACK,

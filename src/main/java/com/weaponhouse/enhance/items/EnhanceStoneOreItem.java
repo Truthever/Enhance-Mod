@@ -4,10 +4,7 @@ import net.minecraft.block.Block;
 import net.minecraft.item.BlockItem;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.text.ITextComponent;
-import net.minecraft.util.text.StringTextComponent;
-import net.minecraft.util.text.TextFormatting;
 import net.minecraft.world.World;
-
 import javax.annotation.Nullable;
 import java.util.List;
 public class EnhanceStoneOreItem extends BlockItem {

@@ -1,0 +1,32 @@
+{
+  "variants": {
+    "animation_frame=0": { "model": "enhance:block/enhance_land_portal_1" },
+    "animation_frame=1": { "model": "enhance:block/enhance_land_portal_2" },
+    "animation_frame=2": { "model": "enhance:block/enhance_land_portal_3" },
+    "animation_frame=3": { "model": "enhance:block/enhance_land_portal_4" },
+    "animation_frame=4": { "model": "enhance:block/enhance_land_portal_5" },
+    "animation_frame=5": { "model": "enhance:block/enhance_land_portal_6" },
+    "animation_frame=6": { "model": "enhance:block/enhance_land_portal_7" },
+    "animation_frame=7": { "model": "enhance:block/enhance_land_portal_8" },
+    "animation_frame=8": { "model": "enhance:block/enhance_land_portal_9" },
+    "animation_frame=9": { "model": "enhance:block/enhance_land_portal_10" },
+    "animation_frame=10": { "model": "enhance:block/enhance_land_portal_11" },
+    "animation_frame=11": { "model": "enhance:block/enhance_land_portal_12" },
+    "animation_frame=12": { "model": "enhance:block/enhance_land_portal_13" },
+    "animation_frame=13": { "model": "enhance:block/enhance_land_portal_14" },
+    "animation_frame=14": { "model": "enhance:block/enhance_land_portal_15" },
+    "animation_frame=15": { "model": "enhance:block/enhance_land_portal_16" },
+    "animation_frame=16": { "model": "enhance:block/enhance_land_portal_17" },
+    "animation_frame=17": { "model": "enhance:block/enhance_land_portal_18" },
+    "animation_frame=18": { "model": "enhance:block/enhance_land_portal_19" },
+    "animation_frame=19": { "model": "enhance:block/enhance_land_portal_20" },
+    "animation_frame=20": { "model": "enhance:block/enhance_land_portal_21" },
+    "animation_frame=21": { "model": "enhance:block/enhance_land_portal_22" },
+    "animation_frame=22": { "model": "enhance:block/enhance_land_portal_23" },
+    "animation_frame=23": { "model": "enhance:block/enhance_land_portal_24" },
+    "animation_frame=24": { "model": "enhance:block/enhance_land_portal_25" },
+    "animation_frame=25": { "model": "enhance:block/enhance_land_portal_26" },
+    "animation_frame=26": { "model": "enhance:block/enhance_land_portal_27" },
+    "animation_frame=27": { "model": "enhance:block/enhance_land_portal_28" }
+  }
+}

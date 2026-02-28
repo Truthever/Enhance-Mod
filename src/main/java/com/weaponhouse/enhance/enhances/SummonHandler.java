@@ -3,7 +3,6 @@ package com.weaponhouse.enhance.enhances;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.MobEntity;
-import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.particles.ParticleTypes;
 import net.minecraft.util.math.BlockPos;
@@ -11,10 +10,8 @@ import net.minecraft.util.math.vector.Vector3d;
 import net.minecraft.world.World;
 import net.minecraftforge.common.util.Constants;
 import net.minecraftforge.event.entity.living.LivingHurtEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+
 import java.util.*;
-@Mod.EventBusSubscriber(modid = "enhance")
 public class SummonHandler {
     private static final String BUFF_TAG = "WeaponHouseBuffs";
     private static final String SUMMON_TAG = "summon";
@@ -33,15 +30,10 @@ public class SummonHandler {
     }};
     private static final Set<String> ALL_MARK_TAGS = MARK_TO_AMPLIFY_LEVEL.keySet();
     private static final String SUMMONED_MOB_TAG = "summoned_by_buff";
-    @SubscribeEvent
     public static void onLivingHurt(LivingHurtEvent event) {
         LivingEntity hurtEntity = event.getEntityLiving();
         World world = hurtEntity.world;
-        if (world.isRemote || !(hurtEntity instanceof MobEntity) || !hasSummonBuff(hurtEntity) || event.getSource().getTrueSource() == null) {
-            return;
-        }
-        if (hurtEntity instanceof PlayerEntity) {
-            removeSummonBuff(hurtEntity);
+        if (world.isRemote || !(hurtEntity instanceof MobEntity) || hasSummonBuff(hurtEntity) || event.getSource().getTrueSource() == null) {
             return;
         }
         MobEntity hurtMob = (MobEntity) hurtEntity;
@@ -80,7 +72,7 @@ public class SummonHandler {
             }
             world.addEntity(summonedMob);
             spawnSummonSuccessParticles(summonedMob);
-        } catch (Exception e) {
+        } catch (Exception ignored) {
         }
     }
     private static BlockPos findValidSummonPos(MobEntity parentMob) {
@@ -111,7 +103,7 @@ public class SummonHandler {
         return null;
     }
     private static boolean isUnsummonableType(EntityType<? extends MobEntity> mobType) {
-        String mobId = mobType.getRegistryName().toString();
+        String mobId = Objects.requireNonNull(mobType.getRegistryName()).toString();
         return mobId.contains("ender_dragon") ||
                 mobId.contains("wither") ||
                 mobId.contains("villager") ||
@@ -121,6 +113,12 @@ public class SummonHandler {
         CompoundNBT parentData = parent.getPersistentData();
         CompoundNBT childData = child.getPersistentData();
         Random random = new Random();
+        boolean hasInspiration = parentData.contains("InspirationMarker") &&
+                parentData.getCompound("InspirationMarker").getBoolean("active");
+        String inspirationBuffName = "";
+        if (hasInspiration) {
+            inspirationBuffName = parentData.getCompound("InspirationMarker").getString("buffName");
+        }
         if (!parentData.contains(BUFF_TAG, Constants.NBT.TAG_COMPOUND)) {
             return;
         }
@@ -149,9 +147,19 @@ public class SummonHandler {
         }
         List<String> normalTags = new ArrayList<>();
         for (String tagKey : parentBuffs.keySet()) {
-            if (!ALL_MARK_TAGS.contains(tagKey) && !tagKey.equals(SUMMON_TAG)) {
-                normalTags.add(tagKey);
+            if (tagKey.equals(SUMMON_TAG)) {
+                continue;
             }
+            if (tagKey.equals("inspiration")) {
+                continue;
+            }
+            if (hasInspiration && tagKey.equals(inspirationBuffName)) {
+                continue;
+            }
+            if (ALL_MARK_TAGS.contains(tagKey)) {
+                continue;
+            }
+            normalTags.add(tagKey);
         }
         int targetCount = LEVEL_TO_NORMAL_COUNT.getOrDefault(parentAmplifyLevel, 0);
         int actualCount = Math.min(targetCount, normalTags.size());
@@ -172,6 +180,15 @@ public class SummonHandler {
         }
         if (!childBuffs.isEmpty()) {
             childData.put(BUFF_TAG, childBuffs);
+        }
+        clearInspirationMarker(child);
+    }
+    private static void clearInspirationMarker(MobEntity child) {
+        CompoundNBT childData = child.getPersistentData();
+        if (childData.contains("InspirationMarker")) {
+            CompoundNBT marker = new CompoundNBT();
+            marker.putBoolean("active", false);
+            childData.put("InspirationMarker", marker);
         }
     }
     private static void spawnSummonSuccessParticles(MobEntity mob) {
@@ -206,26 +223,18 @@ public class SummonHandler {
     }
     public static boolean hasSummonBuff(LivingEntity entity) {
         if (!(entity instanceof MobEntity)) {
-            return false;
+            return true;
         }
         CompoundNBT entityData = entity.getPersistentData();
-        return entityData.contains(BUFF_TAG) &&
-                entityData.getCompound(BUFF_TAG).contains(SUMMON_TAG) &&
-                entityData.getCompound(BUFF_TAG).getInt(SUMMON_TAG) > 0;
+        return !entityData.contains(BUFF_TAG) ||
+                !entityData.getCompound(BUFF_TAG).contains(SUMMON_TAG) ||
+                entityData.getCompound(BUFF_TAG).getInt(SUMMON_TAG) <= 0;
     }
     public static int getSummonLevel(LivingEntity entity) {
-        if (!hasSummonBuff(entity)) {
+        if (hasSummonBuff(entity)) {
             return 0;
         }
         CompoundNBT buffs = entity.getPersistentData().getCompound(BUFF_TAG);
         return buffs.getInt(SUMMON_TAG);
-    }
-    public static void removeSummonBuff(LivingEntity entity) {
-        CompoundNBT entityData = entity.getPersistentData();
-        if (entityData.contains(BUFF_TAG)) {
-            CompoundNBT buffs = entityData.getCompound(BUFF_TAG);
-            buffs.putInt(SUMMON_TAG, 0);
-            entityData.put(BUFF_TAG, buffs);
-        }
     }
 }

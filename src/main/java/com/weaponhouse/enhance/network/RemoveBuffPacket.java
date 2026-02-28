@@ -1,9 +1,11 @@
 package com.weaponhouse.enhance.network;
+
 import com.weaponhouse.enhance.commands.EnhanceCommand;
 import net.minecraft.entity.player.ServerPlayerEntity;
-import net.minecraft.network.PacketBuffer;
 import net.minecraft.nbt.CompoundNBT;
+import net.minecraft.network.PacketBuffer;
 import net.minecraftforge.fml.network.NetworkEvent;
+
 import java.util.function.Supplier;
 public class RemoveBuffPacket {
     private final String buffToRemove;

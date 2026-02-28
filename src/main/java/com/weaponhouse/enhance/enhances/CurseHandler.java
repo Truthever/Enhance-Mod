@@ -1,92 +1,130 @@
 package com.weaponhouse.enhance.enhances;
 
-import com.weaponhouse.enhance.commands.EnhanceCommand;
-import com.weaponhouse.enhance.effects.EffectRegistry;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.projectile.AbstractArrowEntity;
+import net.minecraft.entity.projectile.ThrowableEntity;
 import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.potion.EffectInstance;
 import net.minecraft.util.DamageSource;
 import net.minecraftforge.event.entity.EntityJoinWorldEvent;
-import net.minecraftforge.event.entity.living.LivingAttackEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
-@Mod.EventBusSubscriber(modid = "enhance")
+import net.minecraftforge.event.entity.ProjectileImpactEvent;
+import net.minecraftforge.event.entity.living.LivingDamageEvent;
+import net.minecraftforge.event.entity.living.LivingHurtEvent;
 public class CurseHandler {
-    private static final int CURSE_EFFECT_DURATION = 200;
-    private static final String CURSE_TAG = "curse";
     private static final String BUFF_TAG = "WeaponHouseBuffs";
-    @SubscribeEvent
-    public static void onLivingAttack(LivingAttackEvent event) {
-        if (!(event.getSource().getImmediateSource() instanceof LivingEntity)) {
-            return;
+    private static final String CURSE_TAG = "curse";
+    private static final float DAMAGE_BONUS_PER_LEVEL = 0.10f;
+    private static final float ARROW_SPEED_BONUS_PER_LEVEL = 0.05f;
+    public static void onLivingDamage(LivingDamageEvent event) {
+        if (event.getSource().getImmediateSource() instanceof LivingEntity) {
+            LivingEntity attacker = (LivingEntity) event.getSource().getImmediateSource();
+            applyMeleeBonus(attacker, event);
         }
+    }
+    public static void onLivingHurt(LivingHurtEvent event) {
         DamageSource source = event.getSource();
-        if (source instanceof ThornsHandler.ThornsDamageSource &&
-                ((ThornsHandler.ThornsDamageSource) source).isThornsDamage()) {
-            return;
-        }
-        LivingEntity attacker = (LivingEntity) event.getSource().getImmediateSource();
-        int curseLevel = getCurseLevel(attacker);
-        if (curseLevel <= 0) {
-            return;
-        }
-        applyCurseDamageBoostEffect(attacker, curseLevel);
-        applyCurseEffect(attacker, curseLevel);
-    }
-    @SubscribeEvent
-    public static void onArrowShoot(EntityJoinWorldEvent event) {
-        if (!(event.getEntity() instanceof AbstractArrowEntity)) {
-            return;
-        }
-        AbstractArrowEntity arrow = (AbstractArrowEntity) event.getEntity();
-        if (!(arrow.getShooter() instanceof LivingEntity)) {
-            return;
-        }
-        LivingEntity shooter = (LivingEntity) arrow.getShooter();
-        int curseLevel = getCurseLevel(shooter);
-        if (curseLevel <= 0) {
-            return;
-        }
-        applyCurseDamageBoostEffect(shooter, curseLevel);
-        applyCurseEffect(shooter, curseLevel);
-    }
-    private static void applyCurseDamageBoostEffect(LivingEntity entity, int curseLevel) {
-        int amplifier = curseLevel - 1;
-        EffectInstance newEffect = new EffectInstance(
-                EffectRegistry.CURSEDAMAGE,
-                5,
-                amplifier,
-                false,
-                true
-        );
-        entity.addPotionEffect(newEffect);
-    }
-    private static void applyCurseEffect(LivingEntity entity, int curseLevel) {
-        int amplifier = curseLevel - 1;
-        EffectInstance existingEffect = entity.getActivePotionEffect(EffectRegistry.CURSE);
-        if (existingEffect == null || existingEffect.getDuration() < 60) {
-            EffectInstance newEffect = new EffectInstance(
-                    EffectRegistry.CURSE,
-                    CURSE_EFFECT_DURATION,
-                    amplifier,
-                    false,
-                    true
-            );
-            entity.addPotionEffect(newEffect);
-        }
-    }
-    private static int getCurseLevel(LivingEntity entity) {
-        CompoundNBT data = entity.getPersistentData();
-        if (data.contains(BUFF_TAG)) {
-            CompoundNBT buffs = data.getCompound(BUFF_TAG);
-            if (buffs.contains(CURSE_TAG)) {
-                return Math.max(buffs.getInt(CURSE_TAG), 0);
+        if (source.isExplosion()) {
+            LivingEntity explosionSource = getExplosionSource(source);
+            if (explosionSource != null) {
+                int level = getCurseLevel(explosionSource);
+                if (level > 0) {
+                    float originalDamage = event.getAmount();
+                    float newDamage = originalDamage * (1 + level * DAMAGE_BONUS_PER_LEVEL);
+                    event.setAmount(newDamage);
+                }
             }
         }
-        if (data.contains(EnhanceCommand.BUFF_TAG)) {
-            CompoundNBT buffs = data.getCompound(EnhanceCommand.BUFF_TAG);
-            return Math.max(buffs.getInt(CURSE_TAG), 0);
+        if (source.getImmediateSource() instanceof AbstractArrowEntity) {
+            AbstractArrowEntity arrow = (AbstractArrowEntity) source.getImmediateSource();
+            if (arrow.getShooter() instanceof LivingEntity) {
+                LivingEntity shooter = (LivingEntity) arrow.getShooter();
+                int level = getCurseLevel(shooter);
+                if (level > 0) {
+                    float originalDamage = event.getAmount();
+                    float newDamage = originalDamage * (1 + level * DAMAGE_BONUS_PER_LEVEL);
+                    event.setAmount(newDamage);
+                }
+            }
+        }
+        else if (source.getImmediateSource() instanceof ThrowableEntity) {
+            ThrowableEntity throwable = (ThrowableEntity) source.getImmediateSource();
+            if (throwable.getShooter() instanceof LivingEntity) {
+                LivingEntity shooter = (LivingEntity) throwable.getShooter();
+                int level = getCurseLevel(shooter);
+                if (level > 0) {
+                    float originalDamage = event.getAmount();
+                    float newDamage = originalDamage * (1 + level * DAMAGE_BONUS_PER_LEVEL);
+                    event.setAmount(newDamage);
+                }
+            }
+        }
+    }
+    public static void onArrowShoot(EntityJoinWorldEvent event) {
+        if (event.getEntity() instanceof AbstractArrowEntity) {
+            AbstractArrowEntity arrow = (AbstractArrowEntity) event.getEntity();
+            if (arrow.getShooter() instanceof LivingEntity) {
+                applyArrowSpeedBonus((LivingEntity) arrow.getShooter(), arrow);
+            }
+        }
+    }
+    public static void onProjectileImpact(ProjectileImpactEvent event) {
+        if (event.getEntity() instanceof AbstractArrowEntity) {
+            AbstractArrowEntity arrow = (AbstractArrowEntity) event.getEntity();
+            if (arrow.getShooter() instanceof LivingEntity) {
+                LivingEntity shooter = (LivingEntity) arrow.getShooter();
+                int level = getCurseLevel(shooter);
+                if (level > 0 && event.getRayTraceResult().getType() == net.minecraft.util.math.RayTraceResult.Type.ENTITY) {
+                    net.minecraft.util.math.EntityRayTraceResult entityResult =
+                            (net.minecraft.util.math.EntityRayTraceResult) event.getRayTraceResult();
+                    if (entityResult.getEntity() instanceof LivingEntity) {
+                        applyArrowSpeedBonus(shooter, arrow);
+                    }
+                }
+            }
+        }
+        else if (event.getEntity() instanceof ThrowableEntity) {
+            ThrowableEntity throwable = (ThrowableEntity) event.getEntity();
+            if (throwable.getShooter() instanceof LivingEntity) {
+                LivingEntity shooter = (LivingEntity) throwable.getShooter();
+                int level = getCurseLevel(shooter);
+                if (level > 0) {
+                    event.getRayTraceResult().getType();
+                }
+            }
+        }
+    }
+    private static void applyMeleeBonus(LivingEntity attacker, LivingDamageEvent event) {
+        int level = getCurseLevel(attacker);
+        if (level > 0) {
+            float newDamage = event.getAmount() * (1 + level * DAMAGE_BONUS_PER_LEVEL);
+            event.setAmount(newDamage);
+        }
+    }
+    private static void applyArrowSpeedBonus(LivingEntity shooter, AbstractArrowEntity arrow) {
+        int level = getCurseLevel(shooter);
+        if (level > 0) {
+            arrow.setMotion(
+                    arrow.getMotion().x * (1 + level * ARROW_SPEED_BONUS_PER_LEVEL),
+                    arrow.getMotion().y * (1 + level * ARROW_SPEED_BONUS_PER_LEVEL),
+                    arrow.getMotion().z * (1 + level * ARROW_SPEED_BONUS_PER_LEVEL)
+            );
+        }
+    }
+    private static LivingEntity getExplosionSource(DamageSource source) {
+        if (source.getTrueSource() instanceof LivingEntity) {
+            return (LivingEntity) source.getTrueSource();
+        }
+        if (source.getImmediateSource() instanceof LivingEntity) {
+            return (LivingEntity) source.getImmediateSource();
+        }
+
+        return null;
+    }
+    private static int getCurseLevel(LivingEntity entity) {
+        if (entity.getPersistentData().contains(BUFF_TAG)) {
+            CompoundNBT buffs = entity.getPersistentData().getCompound(BUFF_TAG);
+            if (buffs.contains(CURSE_TAG)) {
+                return buffs.getInt(CURSE_TAG);
+            }
         }
         return 0;
     }

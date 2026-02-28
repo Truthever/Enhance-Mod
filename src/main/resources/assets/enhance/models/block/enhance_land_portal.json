@@ -1,0 +1,6 @@
+{
+  "parent": "block/cube_all",
+  "textures": {
+    "all": "enhance:block/enhance_land_portal_1"
+  }
+}

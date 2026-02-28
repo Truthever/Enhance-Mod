@@ -1,0 +1,11 @@
+{
+  "type": "enhance:chaoslands",
+  "generator": {
+    "type": "enhance:chaoslands_chunk_generator",
+    "seed": 12345,
+    "biome_source": {
+      "type": "enhance:chaoslands_biome_provider",
+      "seed": 12345
+    }
+  }
+}

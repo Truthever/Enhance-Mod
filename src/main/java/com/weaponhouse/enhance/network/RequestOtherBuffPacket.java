@@ -1,10 +1,12 @@
 package com.weaponhouse.enhance.network;
+
 import com.weaponhouse.enhance.session.ServerBlockSession;
 import com.weaponhouse.enhance.session.ServerSessionManager;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.network.PacketBuffer;
 import net.minecraft.util.math.BlockPos;
 import net.minecraftforge.fml.network.NetworkEvent;
+
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.Supplier;
@@ -52,7 +54,6 @@ public class RequestOtherBuffPacket {
             }
             if (otherPlayer != null) {
                 SendBuffPacket.sendBuffDataToTarget(otherPlayer, requester);
-            } else {
             }
         });
         ctx.get().setPacketHandled(true);

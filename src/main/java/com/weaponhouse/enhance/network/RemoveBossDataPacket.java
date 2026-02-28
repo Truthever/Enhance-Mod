@@ -1,6 +1,8 @@
 package com.weaponhouse.enhance.network;
+
 import net.minecraft.network.PacketBuffer;
 import net.minecraftforge.fml.network.NetworkEvent;
+
 import java.util.UUID;
 import java.util.function.Supplier;
 public class RemoveBossDataPacket {

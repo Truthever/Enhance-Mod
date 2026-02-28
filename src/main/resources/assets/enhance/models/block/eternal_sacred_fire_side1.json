@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:block/template_fire_side",
+  "textures": {
+    "fire": "enhance:block/eternal_sacred_fire_1"
+  }
+}

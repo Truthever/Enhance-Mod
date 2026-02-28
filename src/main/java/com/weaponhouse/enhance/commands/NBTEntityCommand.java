@@ -1,20 +1,21 @@
 package com.weaponhouse.enhance.commands;
 
 import com.mojang.brigadier.CommandDispatcher;
-import net.minecraft.client.resources.I18n;
 import net.minecraft.command.CommandSource;
+import net.minecraft.command.Commands;
 import net.minecraft.command.arguments.EntityArgument;
+import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.ai.attributes.Attributes;
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.entity.Entity;
-import net.minecraft.util.text.StringTextComponent;
-import net.minecraft.command.Commands;
 import net.minecraft.nbt.CompoundNBT;
+import net.minecraft.util.text.StringTextComponent;
+import net.minecraft.util.text.TranslationTextComponent;
+
 import java.util.Collection;
 import java.util.Objects;
 public class NBTEntityCommand {
-    private static final String BUFF_TAG = "WeaponHouseBuffs";
+    public static final String BUFF_TAG = "WeaponHouseBuffs";
     public static void register(CommandDispatcher<CommandSource> dispatcher) {
         dispatcher.register(
                 Commands.literal("nbtentity")
@@ -43,43 +44,43 @@ public class NBTEntityCommand {
                 if (nbt.contains(BUFF_TAG)) {
                     CompoundNBT buffs = nbt.getCompound(BUFF_TAG);
                     buffs.keySet().forEach(buffKey -> {
-                        String localizedBuffName = I18n.format("buff.enhance." + buffKey);
+                        TranslationTextComponent buffName = new TranslationTextComponent("buff.enhance." + buffKey);
                         int buffLevel = buffs.getInt(buffKey);
-                        buffInfo.append(localizedBuffName).append(" Lv.").append(buffLevel).append("; ");
+                        buffInfo.append(buffName.getString()).append(" Lv.").append(buffLevel).append("; ");
                     });
                 }
-                String finalBuffInfo = buffInfo.length() > 0 ? buffInfo.toString().trim() : I18n.format("command.nbtentity.no_buffs");
+                String finalBuffInfo = buffInfo.length() > 0 ? buffInfo.toString().trim() :
+                        new TranslationTextComponent("command.nbtentity.no_buffs").getString();
                 double dynamicMaxHealth = livingEntity.getMaxHealth();
                 double dynamicAttackDamage = Objects.requireNonNull(livingEntity.getAttribute(Attributes.ATTACK_DAMAGE)).getValue();
                 float dynamicSpeed = (float) Objects.requireNonNull(livingEntity.getAttribute(Attributes.MOVEMENT_SPEED)).getValue();
-                StringBuilder message = new StringBuilder(
-                        I18n.format("command.nbtentity.attributes", entityName) + "\n"
-                );
-                message.append(" - ").append(I18n.format("command.nbtentity.base_max_health", baseMaxHealth)).append("\n");
-                message.append(" - ").append(I18n.format("command.nbtentity.dynamic_max_health", dynamicMaxHealth)).append("\n");
-                message.append(" - ").append(I18n.format("command.nbtentity.base_attack_damage", baseAttackDamage)).append("\n");
-                message.append(" - ").append(I18n.format("command.nbtentity.dynamic_attack_damage", dynamicAttackDamage)).append("\n");
-                message.append(" - ").append(I18n.format("command.nbtentity.natural_resistance", naturalResistance)).append("\n");
-                message.append(" - ").append(I18n.format("command.nbtentity.dynamic_armor", dynamicArmor)).append("\n");
-                message.append(" - ").append(I18n.format("command.nbtentity.buffs", finalBuffInfo)).append("\n");
-                message.append(" - ").append(I18n.format("command.nbtentity.base_speed", baseSpeed)).append("\n");
-                message.append(" - ").append(I18n.format("command.nbtentity.dynamic_speed", dynamicSpeed)).append("\n");
+                StringBuilder message = new StringBuilder();
+                message.append(new TranslationTextComponent("command.nbtentity.attributes", entityName).getString()).append("\n");
+                message.append(" - ").append(new TranslationTextComponent("command.nbtentity.base_max_health", baseMaxHealth).getString()).append("\n");
+                message.append(" - ").append(new TranslationTextComponent("command.nbtentity.dynamic_max_health", dynamicMaxHealth).getString()).append("\n");
+                message.append(" - ").append(new TranslationTextComponent("command.nbtentity.base_attack_damage", baseAttackDamage).getString()).append("\n");
+                message.append(" - ").append(new TranslationTextComponent("command.nbtentity.dynamic_attack_damage", dynamicAttackDamage).getString()).append("\n");
+                message.append(" - ").append(new TranslationTextComponent("command.nbtentity.natural_resistance", naturalResistance).getString()).append("\n");
+                message.append(" - ").append(new TranslationTextComponent("command.nbtentity.dynamic_resistance", dynamicArmor).getString()).append("\n");
+                message.append(" - ").append(new TranslationTextComponent("command.nbtentity.buffs", finalBuffInfo).getString()).append("\n");
+                message.append(" - ").append(new TranslationTextComponent("command.nbtentity.base_speed", baseSpeed).getString()).append("\n");
+                message.append(" - ").append(new TranslationTextComponent("command.nbtentity.dynamic_speed", dynamicSpeed).getString()).append("\n");
                 if (entity instanceof PlayerEntity) {
                     PlayerEntity player = (PlayerEntity) entity;
                     float flySpeed = player.abilities.getFlySpeed();
-                    message.append("\n - ").append(I18n.format("command.nbtentity.fly_speed", flySpeed));
+                    message.append("\n - ").append(new TranslationTextComponent("command.nbtentity.fly_speed", flySpeed).getString());
                 }
                 source.sendFeedback(new StringTextComponent(message.toString()), false);
                 count++;
             } else {
-                String errorMsg = I18n.format("command.nbtentity.not_living_entity", entity.getName().getString());
+                String errorMsg = new TranslationTextComponent("command.nbtentity.not_living_entity", entity.getName().getString()).getString();
                 source.sendErrorMessage(new StringTextComponent(errorMsg));
             }
         }
         if (count == 0) {
-            source.sendErrorMessage(new StringTextComponent(I18n.format("command.nbtentity.no_valid_entities")));
+            source.sendErrorMessage(new StringTextComponent(new TranslationTextComponent("command.nbtentity.no_valid_entities").getString()));
         } else {
-            source.sendFeedback(new StringTextComponent(I18n.format("command.nbtentity.success_count", count)), true);
+            source.sendFeedback(new StringTextComponent(new TranslationTextComponent("command.nbtentity.success_count", count).getString()), true);
         }
         return count;
     }

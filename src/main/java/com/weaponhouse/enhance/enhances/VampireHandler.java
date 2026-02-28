@@ -1,4 +1,5 @@
 package com.weaponhouse.enhance.enhances;
+
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.projectile.ProjectileEntity;
@@ -10,10 +11,8 @@ import net.minecraft.util.DamageSource;
 import net.minecraft.util.math.vector.Vector3d;
 import net.minecraft.world.server.ServerWorld;
 import net.minecraftforge.event.entity.living.LivingHurtEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+
 import java.util.Random;
-@Mod.EventBusSubscriber(modid = "enhance")
 public class VampireHandler {
     private static final String BUFF_TAG = "WeaponHouseBuffs";
     private static final String VAMPIRE_TAG = "vampire";
@@ -21,7 +20,6 @@ public class VampireHandler {
     private static final float RANGE_HEAL_RATIO = 0.6f;
     private static final RedstoneParticleData RED_FLASH_PARTICLE = new RedstoneParticleData (1.0F, 0.0F, 0.0F, 2.0F);
     private static final float PARTICLE_LIFETIME = 0.05F;
-    @SubscribeEvent
     public static void onLivingHurt (LivingHurtEvent event) {
         if (!(event.getEntityLiving ().world instanceof ServerWorld)) {
             return;

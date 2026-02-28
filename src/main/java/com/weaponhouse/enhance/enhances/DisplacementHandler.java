@@ -1,4 +1,5 @@
 package com.weaponhouse.enhance.enhances;
+
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.ServerPlayerEntity;
@@ -16,16 +17,14 @@ import net.minecraft.world.server.ServerWorld;
 import net.minecraftforge.event.entity.living.LivingAttackEvent;
 import net.minecraftforge.event.entity.living.LivingDeathEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.server.ServerLifecycleHooks;
+
 import java.util.Arrays;
 import java.util.Random;
 import java.util.UUID;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-@Mod.EventBusSubscriber(modid = "enhance")
 public class DisplacementHandler {
     private static final String BUFF_TAG = "WeaponHouseBuffs";
     private static final String DISPLACEMENT_TAG = "displacement";
@@ -37,7 +36,6 @@ public class DisplacementHandler {
     private static final String CURSE_EXPIRY_TAG = "DisplacementCurseExpiry";
     private static final String CURSE_UUID_TAG = "DisplacementCurseUUID";
     private static final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
-    @SubscribeEvent
     public static void onLivingAttack(LivingAttackEvent event) {
         DamageSource source = event.getSource();
         if (source instanceof ThornsHandler.ThornsDamageSource) {
@@ -89,8 +87,10 @@ public class DisplacementHandler {
                 )
         ));
         int randomEffectType = RANDOM.nextInt(3) + 1;
+        String effectTypeName = "";
         switch (randomEffectType) {
             case 1:
+                effectTypeName = "减速";
                 loreNBT.add(StringNBT.valueOf(
                         String.format(
                                 "{\"text\":\"- %s\",\"color\":\"blue\"}",
@@ -99,6 +99,7 @@ public class DisplacementHandler {
                 ));
                 break;
             case 2:
+                effectTypeName = "护甲降低";
                 loreNBT.add(StringNBT.valueOf(
                         String.format(
                                 "{\"text\":\"- %s\",\"color\":\"blue\"}",
@@ -107,6 +108,7 @@ public class DisplacementHandler {
                 ));
                 break;
             case 3:
+                effectTypeName = "生命值降低";
                 loreNBT.add(StringNBT.valueOf(
                         String.format(
                                 "{\"text\":\"- %s\",\"color\":\"blue\"}",
@@ -200,10 +202,7 @@ public class DisplacementHandler {
         int[] displacementUUIDInts = chestplateNBT.getIntArray("DisplacementUUID");
         ItemStack originalChestplate = player.getItemStackFromSlot(TARGET_SLOT);
         if (!originalChestplate.isEmpty()) {
-            if (player.addItemStackToInventory(originalChestplate)) {
-            } else {
                 player.dropItem(originalChestplate, false);
-            }
         }
         player.setItemStackToSlot(TARGET_SLOT, specialChestplate);
         player.sendMessage(
@@ -216,10 +215,9 @@ public class DisplacementHandler {
         playerData.putIntArray(CURSE_UUID_TAG, displacementUUIDInts);
         scheduleArmorRemoval(player, displacementUUIDInts, EFFECT_DURATION_SECONDS);
     }
-    @SubscribeEvent
     public static void onPlayerLogin(PlayerEvent.PlayerLoggedInEvent event) {
         if (event.getPlayer() instanceof PlayerEntity) {
-            PlayerEntity player = (PlayerEntity) event.getPlayer();
+            PlayerEntity player = event.getPlayer();
             CompoundNBT data = player.getPersistentData();
             if (data.contains(CURSE_EXPIRY_TAG) && data.contains(CURSE_UUID_TAG)) {
                 long expiryTime = data.getLong(CURSE_EXPIRY_TAG);
@@ -233,12 +231,10 @@ public class DisplacementHandler {
             }
         }
     }
-    @SubscribeEvent
     public static void onPlayerDeath(LivingDeathEvent event) {
         if (event.getEntityLiving() instanceof PlayerEntity) {
             PlayerEntity player = (PlayerEntity) event.getEntityLiving();
             CompoundNBT data = player.getPersistentData();
-
             if (data.contains(CURSE_EXPIRY_TAG) || data.contains(CURSE_UUID_TAG)) {
                 data.remove(CURSE_EXPIRY_TAG);
                 data.remove(CURSE_UUID_TAG);
@@ -247,7 +243,6 @@ public class DisplacementHandler {
     }
     private static void scheduleArmorRemoval(PlayerEntity player, int[] uuidInts, int delaySeconds) {
         UUID playerUUID = player.getUniqueID();
-
         scheduler.schedule(() -> {
             MinecraftServer server = ServerLifecycleHooks.getCurrentServer();
             if (server != null) {
@@ -274,10 +269,18 @@ public class DisplacementHandler {
         data.remove(CURSE_UUID_TAG);
     }
     private static boolean isCursedArmor(ItemStack stack, int[] uuidInts) {
-        if (stack.getItem() != Items.GOLDEN_CHESTPLATE) return false;
+        if (stack.getItem() != Items.GOLDEN_CHESTPLATE) {
+            return false;
+        }
         CompoundNBT tag = stack.getTag();
-        return tag != null && tag.contains("DisplacementUUID") &&
-                Arrays.equals(tag.getIntArray("DisplacementUUID"), uuidInts);
+        if (tag == null) {
+            return false;
+        }
+        if (!tag.contains("DisplacementUUID")) {
+            return false;
+        }
+        int[] storedUUID = tag.getIntArray("DisplacementUUID");
+        return Arrays.equals(storedUUID, uuidInts);
     }
     private static boolean hasDisplacementBuff(LivingEntity entity) {
         CompoundNBT entityData = entity.getPersistentData();
@@ -303,6 +306,7 @@ public class DisplacementHandler {
             CompoundNBT buffsNBT = entityData.getCompound(BUFF_TAG);
             buffsNBT.remove(DISPLACEMENT_TAG);
             entityData.put(BUFF_TAG, buffsNBT);
+            BossBarHandler.createOrUpdateBossBar(entity);
         }
     }
 }

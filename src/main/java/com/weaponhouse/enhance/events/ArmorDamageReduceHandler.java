@@ -5,11 +5,12 @@ import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.inventory.EquipmentSlotType;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraft.util.text.TextFormatting;
+import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraftforge.event.entity.living.LivingHurtEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
+
 import java.util.Random;
 @Mod.EventBusSubscriber(bus = Mod.EventBusSubscriber.Bus.FORGE)
 public class ArmorDamageReduceHandler {
@@ -21,6 +22,9 @@ public class ArmorDamageReduceHandler {
         }
         PlayerEntity player = (PlayerEntity) event.getEntityLiving();
         float originalDamage = event.getAmount();
+        if (originalDamage <= 0) {
+            return;
+        }
         if (!ArmorSetEventHandler.hasDamageReduceBoost(player)) {
             return;
         }
@@ -36,10 +40,21 @@ public class ArmorDamageReduceHandler {
         float reduceRatio = reduceLevel * 0.1F;
         CompoundNBT playerNBT = player.getPersistentData();
         float damageAfterArmor = calculateDamageAfterArmor(player, playerNBT, originalDamage);
+        if (damageAfterArmor <= 0) {
+            event.setAmount(0);
+            return;
+        }
         if (RANDOM.nextFloat() <= triggerChance) {
-            float finalDamage = damageAfterArmor * (1 - reduceRatio);
-            event.setAmount(Math.max(0, finalDamage));
-            sendReduceTriggeredMessage(player, reduceLevel, (int)(reduceRatio*100), originalDamage, finalDamage);
+            if (EnhanceChestplate.consumeCharge(chestplate, 20)) {
+                float finalDamage = damageAfterArmor * (1 - reduceRatio);
+                finalDamage = Math.max(0, finalDamage);
+                event.setAmount(finalDamage);
+                if (finalDamage < damageAfterArmor) {
+                    sendReduceTriggeredMessage(player, reduceLevel, (int)(reduceRatio * 100), damageAfterArmor, finalDamage);
+                }
+            } else {
+                event.setAmount(damageAfterArmor);
+            }
         } else {
             event.setAmount(damageAfterArmor);
         }
@@ -48,10 +63,9 @@ public class ArmorDamageReduceHandler {
         float naturalArmor = nbt.contains("naturalArmor") ? (float) nbt.getDouble("naturalArmor") : 0F;
         float dynamicArmor = nbt.contains("dynamicArmor") ? (float) nbt.getDouble("dynamicArmor") : 0F;
         float totalArmor = naturalArmor + dynamicArmor;
-        float damageAfterArmor = totalArmor >= 0
+        return totalArmor >= 0
                 ? Math.max(0, originalDamage - totalArmor)
                 : originalDamage - totalArmor;
-        return damageAfterArmor;
     }
     private static void sendReduceTriggeredMessage(PlayerEntity player, int level, int reducePercent, float original, float finalDmg) {
         TranslationTextComponent message = new TranslationTextComponent(

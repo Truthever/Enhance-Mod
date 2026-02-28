@@ -4,25 +4,23 @@ import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.projectile.AbstractArrowEntity;
+import net.minecraft.entity.projectile.ThrowableEntity;
+import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.util.math.EntityRayTraceResult;
 import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.util.text.TranslationTextComponent;
+import net.minecraftforge.common.util.Constants;
 import net.minecraftforge.event.entity.ProjectileImpactEvent;
 import net.minecraftforge.event.entity.living.LivingAttackEvent;
-import net.minecraftforge.event.entity.player.PlayerInteractEvent;
+import net.minecraftforge.event.entity.living.LivingEntityUseItemEvent;
 import net.minecraftforge.eventbus.api.Event;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.common.util.Constants;
-@Mod.EventBusSubscriber(modid = "enhance")
 public class FastingHandler {
     private static final String BUFF_TAG = "WeaponHouseBuffs";
     private static final String FASTING_TAG = "fasting";
     private static final int BASE_DURATION_TICKS = 10 * 20;
     private static final int DURATION_PER_LEVEL_TICKS = 2 * 20;
     private static final String FASTING_END_TIME_TAG = "FastingEndTime";
-    @SubscribeEvent
     public static void onLivingAttack(LivingAttackEvent event) {
         if (event.getEntity().world.isRemote) return;
         if (!(event.getSource().getImmediateSource() instanceof LivingEntity)) return;
@@ -31,12 +29,18 @@ public class FastingHandler {
         LivingEntity target = (LivingEntity) event.getEntity();
         applyFastingEffect(attacker, target);
     }
-    @SubscribeEvent
-    public static void onArrowHit(ProjectileImpactEvent.Arrow event) {
-        if (event.getArrow().world.isRemote) return;
-        AbstractArrowEntity arrow = event.getArrow();
-        if (!(arrow.getShooter() instanceof LivingEntity)) return;
-        LivingEntity shooter = (LivingEntity) arrow.getShooter();
+    public static void onProjectileImpact(ProjectileImpactEvent event) {
+        if (event.getEntity().world.isRemote) return;
+        LivingEntity shooter = null;
+        if (event.getEntity() instanceof AbstractArrowEntity) {
+            AbstractArrowEntity arrow = (AbstractArrowEntity) event.getEntity();
+            shooter = (LivingEntity) arrow.getShooter();
+        }
+        else if (event.getEntity() instanceof ThrowableEntity) {
+            ThrowableEntity throwable = (ThrowableEntity) event.getEntity();
+            shooter = (LivingEntity) throwable.getShooter();
+        }
+        if (shooter == null) return;
         if (event.getRayTraceResult().getType() == RayTraceResult.Type.ENTITY) {
             Entity hitEntity = ((EntityRayTraceResult) event.getRayTraceResult()).getEntity();
             if (hitEntity instanceof LivingEntity) {
@@ -64,26 +68,56 @@ public class FastingHandler {
             );
         }
     }
-    @SubscribeEvent
-    public static void onPlayerTryToEat(PlayerInteractEvent.RightClickItem event) {
-        PlayerEntity player = event.getPlayer();
-        CompoundNBT playerData = player.getPersistentData();
-        if (playerData.contains(FASTING_END_TIME_TAG, Constants.NBT.TAG_LONG)) {
-            long endTime = playerData.getLong(FASTING_END_TIME_TAG);
-            long currentTime = player.world.getGameTime();
-            if (currentTime < endTime) {
-                event.setCanceled(true);
-                event.setResult(Event.Result.DENY);
-                int secondsLeft = (int) ((endTime - currentTime) / 20);
-                player.sendStatusMessage(
-                        new TranslationTextComponent(
-                                "buff.fasting.remaining_time",
-                                secondsLeft
-                        ),
-                        true
-                );
-            } else {
-                playerData.remove(FASTING_END_TIME_TAG);
+    public static void onPlayerUseItemStart(LivingEntityUseItemEvent.Start event) {
+        if (!(event.getEntity() instanceof PlayerEntity)) return;
+        PlayerEntity player = (PlayerEntity) event.getEntity();
+        ItemStack itemStack = event.getItem();
+        if (itemStack.getItem().isFood()) {
+            CompoundNBT playerData = player.getPersistentData();
+            if (playerData.contains(FASTING_END_TIME_TAG, Constants.NBT.TAG_LONG)) {
+                long endTime = playerData.getLong(FASTING_END_TIME_TAG);
+                long currentTime = player.world.getGameTime();
+                if (currentTime < endTime) {
+                    event.setCanceled(true);
+                    event.setResult(Event.Result.DENY);
+                    int secondsLeft = (int) ((endTime - currentTime) / 20);
+                    player.sendStatusMessage(
+                            new TranslationTextComponent(
+                                    "buff.fasting.remaining_time",
+                                    secondsLeft
+                            ),
+                            true
+                    );
+                } else {
+                    playerData.remove(FASTING_END_TIME_TAG);
+                }
+            }
+        }
+    }
+    public static void onPlayerUseItemTick(LivingEntityUseItemEvent.Tick event) {
+        if (!(event.getEntity() instanceof PlayerEntity)) return;
+        PlayerEntity player = (PlayerEntity) event.getEntity();
+        ItemStack itemStack = event.getItem();
+        if (itemStack.getItem().isFood()) {
+            CompoundNBT playerData = player.getPersistentData();
+            if (playerData.contains(FASTING_END_TIME_TAG, Constants.NBT.TAG_LONG)) {
+                long endTime = playerData.getLong(FASTING_END_TIME_TAG);
+                long currentTime = player.world.getGameTime();
+                if (currentTime < endTime) {
+                    event.setCanceled(true);
+                    event.setResult(Event.Result.DENY);
+                    player.stopActiveHand();
+                    int secondsLeft = (int) ((endTime - currentTime) / 20);
+                    player.sendStatusMessage(
+                            new TranslationTextComponent(
+                                    "buff.fasting.remaining_time",
+                                    secondsLeft
+                            ),
+                            true
+                    );
+                } else {
+                    playerData.remove(FASTING_END_TIME_TAG);
+                }
             }
         }
     }

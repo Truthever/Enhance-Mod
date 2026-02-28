@@ -1,0 +1,32 @@
+{
+  "parent": "item/generated",
+  "textures": {
+    "layer0": "enhance:item/enhance_pill"
+  },
+  "overrides": [
+    {
+      "predicate": {
+        "enhance:pill_type": 1
+      },
+      "model": "enhance:item/enhance_pill_attack"
+    },
+    {
+      "predicate": {
+        "enhance:pill_type": 2
+      },
+      "model": "enhance:item/enhance_pill_life"
+    },
+    {
+      "predicate": {
+        "enhance:pill_type": 3
+      },
+      "model": "enhance:item/enhance_pill_defense"
+    },
+    {
+      "predicate": {
+        "enhance:pill_type": 4
+      },
+      "model": "enhance:item/enhance_pill_speed"
+    }
+  ]
+}

@@ -1,0 +1,7 @@
+{
+  "variants": {
+    "": {
+      "model": "enhance:block/alchemy_furnace"
+    }
+  }
+}

@@ -6,11 +6,10 @@ import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.world.World;
 import net.minecraftforge.event.entity.living.LivingDamageEvent;
 import net.minecraftforge.event.entity.living.LivingEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
 
-import java.util.*;
-@Mod.EventBusSubscriber(modid = "enhance")
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
 public class TrackingHandler {
     private static final Map<UUID, TrackedTarget> trackingTargets = new HashMap<>();
     private static class TrackedTarget {
@@ -23,7 +22,6 @@ public class TrackingHandler {
             this.level = level;
         }
     }
-    @SubscribeEvent
     public static void onEntityDamage(LivingDamageEvent event) {
         if (event.getEntity().world.isRemote) return;
         if (event.getSource().getTrueSource() instanceof MobEntity) {
@@ -35,7 +33,6 @@ public class TrackingHandler {
             }
         }
     }
-    @SubscribeEvent
     public static void onEntityUpdate(LivingEvent.LivingUpdateEvent event) {
         LivingEntity entity = event.getEntityLiving();
         if (entity.world.isRemote) return;

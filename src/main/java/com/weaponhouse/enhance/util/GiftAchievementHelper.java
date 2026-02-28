@@ -1,10 +1,11 @@
 package com.weaponhouse.enhance.util;
-import com.weaponhouse.enhance.Enhance;
+
+import com.weaponhouse.enhance.*;
 import com.weaponhouse.enhance.commands.EnhanceCommand;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraft.util.text.TextFormatting;
+import net.minecraft.util.text.TranslationTextComponent;
 public class GiftAchievementHelper {
     private static final String TRIGGERED_MARK = "first_gift_enhancement_triggered";
     private static final String BUFF_TAG = EnhanceCommand.BUFF_TAG;
@@ -59,6 +60,6 @@ public class GiftAchievementHelper {
                     player.getUniqueID()
             );
             playerData.putBoolean(TRIGGERED_MARK, true);
-        } catch (Exception e) {}
+        } catch (Exception ignored) {}
     }
 }

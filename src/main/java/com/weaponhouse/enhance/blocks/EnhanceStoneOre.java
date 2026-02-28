@@ -1,17 +1,18 @@
 package com.weaponhouse.enhance.blocks;
 
-import net.minecraft.block.*;
+import net.minecraft.block.BlockState;
+import net.minecraft.block.OreBlock;
+import net.minecraft.block.SoundType;
 import net.minecraft.block.material.Material;
-import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.IWorldReader;
 import net.minecraftforge.common.ToolType;
 
 import java.util.Random;
 public class EnhanceStoneOre extends OreBlock {
-
     public EnhanceStoneOre() {
-        super(AbstractBlock.Properties.create(Material.ROCK)
+        super(Properties.create(Material.ROCK)
                 .hardnessAndResistance(5.0F, 6.0F)
                 .harvestLevel(3)
                 .harvestTool(ToolType.PICKAXE)

@@ -19,7 +19,7 @@ public class PeakAchievementTrigger extends AbstractCriterionTrigger<PeakAchieve
         return new Instance(entityPredicate);
     }
     public void trigger(ServerPlayerEntity player) {
-        this.triggerListeners(player, instance -> instance.test());
+        this.triggerListeners(player, Instance::test);
     }
     public static class Instance extends CriterionInstance {
         public Instance(EntityPredicate.AndPredicate player) {

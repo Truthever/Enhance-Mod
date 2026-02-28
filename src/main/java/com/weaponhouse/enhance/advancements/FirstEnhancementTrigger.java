@@ -1,6 +1,7 @@
 package com.weaponhouse.enhance.advancements;
 
 import com.google.gson.JsonObject;
+import com.weaponhouse.enhance.Enhance;
 import net.minecraft.advancements.criterion.AbstractCriterionTrigger;
 import net.minecraft.advancements.criterion.CriterionInstance;
 import net.minecraft.advancements.criterion.EntityPredicate;
@@ -8,7 +9,6 @@ import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.loot.ConditionArrayParser;
 import net.minecraft.loot.ConditionArraySerializer;
 import net.minecraft.util.ResourceLocation;
-import com.weaponhouse.enhance.Enhance;
 public class FirstEnhancementTrigger extends AbstractCriterionTrigger<FirstEnhancementTrigger.Instance> {
     public static final ResourceLocation ID = new ResourceLocation(Enhance.MOD_ID, "first_enhancement");
     public FirstEnhancementTrigger() {}

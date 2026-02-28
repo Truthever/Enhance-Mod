@@ -2,25 +2,12 @@ package com.weaponhouse.enhance.effects;
 
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.potion.EffectInstance;
 import net.minecraft.potion.EffectType;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.vector.Vector3d;
-import net.minecraftforge.fml.common.ObfuscationReflectionHelper;
-import java.lang.reflect.Field;
 public class OceanEffect extends BaseEffect {
     private static final float MAX_BOOST_PERCENT = 2.0F;
     private static final float PER_LEVEL_BOOST = 0.05F;
-    private static Field jumpKeyField;
-    private static Field sneakKeyField;
-    static {
-        try {
-            jumpKeyField = ObfuscationReflectionHelper.findField(PlayerEntity.class, "field_71059_n"); // 对应jumpPressed
-            sneakKeyField = ObfuscationReflectionHelper.findField(PlayerEntity.class, "field_71060_m"); // 对应sneakPressed
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
     public OceanEffect() {
         super(EffectType.BENEFICIAL, 0x00FFFF);
     }
@@ -56,9 +43,9 @@ public class OceanEffect extends BaseEffect {
         double verticalY = motion.y;
         if (entity instanceof PlayerEntity) {
             PlayerEntity player = (PlayerEntity) entity;
-            boolean isJumping = isPlayerJumping(player);
-            boolean isSneaking = isPlayerSneaking(player);
-            if (isJumping) {
+            boolean isJumping = player.moveVertical > 0;
+            boolean isSneaking = player.isSneaking();
+            if (isJumping || player.getMotion().y > 0.1) {
                 verticalY = 0.08D * boostMultiplier;
             }
             else if (isSneaking) {
@@ -68,26 +55,25 @@ public class OceanEffect extends BaseEffect {
         Vector3d newMotion = new Vector3d(horizontalX, verticalY, horizontalZ);
         newMotion = clampMaxSpeed(newMotion);
         entity.setMotion(newMotion);
-    }
-    private boolean isPlayerJumping(PlayerEntity player) {
-        try {
-            if (jumpKeyField != null) {
-                return jumpKeyField.getBoolean(player);
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
+        if (entity.world.isRemote && entity.isInWater()) {
+            spawnSwimmingParticles(entity);
         }
-        return false;
     }
-    private boolean isPlayerSneaking(PlayerEntity player) {
-        try {
-            if (sneakKeyField != null) {
-                return sneakKeyField.getBoolean(player);
+    private void spawnSwimmingParticles(LivingEntity entity) {
+        if (entity.world.rand.nextInt(5) == 0) {
+            Vector3d lookVec = entity.getLookVec();
+            Vector3d position = entity.getPositionVec()
+                    .add(lookVec.x * 0.5, entity.getEyeHeight() - 0.2, lookVec.z * 0.5);
+            for (int i = 0; i < 3; i++) {
+                double offsetX = (entity.world.rand.nextDouble() - 0.5) * 0.5;
+                double offsetY = (entity.world.rand.nextDouble() - 0.5) * 0.5;
+                double offsetZ = (entity.world.rand.nextDouble() - 0.5) * 0.5;
+
+                entity.world.addParticle(net.minecraft.particles.ParticleTypes.BUBBLE,
+                        position.x + offsetX, position.y + offsetY, position.z + offsetZ,
+                        offsetX * 0.1, offsetY * 0.1 + 0.02, offsetZ * 0.1);
             }
-        } catch (Exception e) {
-            e.printStackTrace();
         }
-        return player.isSneaking();
     }
     private Vector3d clampMaxSpeed(Vector3d motion) {
         double horizontalSpeed = Math.sqrt(motion.x * motion.x + motion.z * motion.z);
@@ -103,14 +89,10 @@ public class OceanEffect extends BaseEffect {
     }
     @Override
     public boolean isReady(int duration, int amplifier) {
-        return true; // 每tick都应用助力
-    }
-    @Override
-    public boolean shouldRender(EffectInstance effect) {
         return true;
     }
     @Override
-    public boolean shouldRenderHUD(EffectInstance effect) {
-        return true;
+    public String getName() {
+        return "effect.enhance.ocean";
     }
 }

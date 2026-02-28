@@ -32,13 +32,33 @@ public class BleedEffectHandler {
             return;
         }
         if (remainingDuration % 20 == 0) {
-            int damage = 2 * bleedLevel;
-            entity.attackEntityFrom(BLEED_DAMAGE, damage);
+            float finalDamage = calculateBleedDamageWithResistance(entity, bleedLevel);
+            if (!entity.world.isRemote && finalDamage > 0f) {
+                float newHealth = entity.getHealth() - finalDamage;
+                entity.setHealth(newHealth);
+                if (newHealth <= 0.0F) {
+                    entity.onDeath(BLEED_DAMAGE);
+                }
+            }
             if (entity.world.isRemote) {
                 spawnBloodParticles(entity);
             }
         }
         entity.getPersistentData().putInt("bleed_duration", remainingDuration - 1);
+    }
+    private static float calculateBleedDamageWithResistance(LivingEntity entity, int baseDamage) {
+        float base = Math.max(0f, (float) baseDamage);
+        float dynamicArmor = 0f;
+        if (entity.getPersistentData().contains("dynamicArmor")) {
+            dynamicArmor = entity.getPersistentData().getFloat("dynamicArmor");
+        }
+        if (dynamicArmor < 0f) {
+            dynamicArmor = 0f;
+        }
+        float afterBlock = base - dynamicArmor;
+        float minDamage = base * 0.5f;
+        float finalDamage = Math.max(afterBlock, minDamage);
+        return Math.max(0f, finalDamage);
     }
     private static void spawnBloodParticles(LivingEntity entity) {
         for (int i = 0; i < 3; i++) {
@@ -47,7 +67,7 @@ public class BleedEffectHandler {
                     entity.getPosXRandom(0.5D),
                     entity.getPosY() + entity.getHeight() * 0.5D,
                     entity.getPosZRandom(0.5D),
-                    1.0D, 0.0D, 0.0D // 红色粒子
+                    1.0D, 0.0D, 0.0D
             );
         }
     }

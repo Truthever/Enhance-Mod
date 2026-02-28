@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "  B",
+    "BC ",
+    "BB "
+  ],
+  "key": {
+    "B": {
+      "item": "minecraft:gold_ingot"
+    },
+    "C": {
+      "item": "enhance:enhance_stone"
+    }
+  },
+  "result": {
+    "item": "enhance:dimensional_anchor",
+    "count": 1
+  },
+  "group": "enhance"
+}

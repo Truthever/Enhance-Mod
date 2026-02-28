@@ -1,0 +1,14 @@
+{
+  "variants": {
+    "activated=false,pill_type=default": { "model": "enhance:block/enhance_land_portal_frame" },
+    "activated=false,pill_type=attack": { "model": "enhance:block/enhance_land_portal_frame" },
+    "activated=false,pill_type=life": { "model": "enhance:block/enhance_land_portal_frame" },
+    "activated=false,pill_type=defense": { "model": "enhance:block/enhance_land_portal_frame" },
+    "activated=false,pill_type=speed": { "model": "enhance:block/enhance_land_portal_frame" },
+    "activated=true,pill_type=default": { "model": "enhance:block/enhance_land_portal_frame_active_default" },
+    "activated=true,pill_type=attack": { "model": "enhance:block/enhance_land_portal_frame_active_attack" },
+    "activated=true,pill_type=life": { "model": "enhance:block/enhance_land_portal_frame_active_life" },
+    "activated=true,pill_type=defense": { "model": "enhance:block/enhance_land_portal_frame_active_defense" },
+    "activated=true,pill_type=speed": { "model": "enhance:block/enhance_land_portal_frame_active_speed" }
+  }
+}

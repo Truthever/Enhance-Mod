@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "   ",
+    " G ",
+    " A "
+  ],
+  "key": {
+    "G": {
+      "item": "enhance:enhance_dust"
+    },
+    "A": {
+      "item": "minecraft:diamond"
+    }
+  },
+  "result": {
+    "item": "enhance:enhance_dagger",
+    "count": 1
+  },
+  "group": "gift_crafting"
+}

@@ -1,5 +1,5 @@
 package com.weaponhouse.enhance.session;
-import com.weaponhouse.enhance.Enhance;
+
 import net.minecraft.util.math.BlockPos;
 import java.util.HashSet;
 import java.util.Set;
@@ -14,30 +14,20 @@ public class BlockSession {
         this.players.add(initialPlayer);
         this.lastInteractionTime = System.currentTimeMillis();
     }
-    public boolean joinSession(UUID playerUUID) {
-        if (!players.contains(playerUUID) && players.size() < 2) {
-            players.add(playerUUID);
-            lastInteractionTime = System.currentTimeMillis();
-            return true;
-        }
-        return false;
-    }
-    public boolean leaveSession(UUID playerUUID) {
+    public void leaveSession(UUID playerUUID) {
         if (players.contains(playerUUID)) {
             players.remove(playerUUID);
             lastInteractionTime = System.currentTimeMillis();
-            return true;
         }
-        return false;
     }
     public boolean isEmpty() {
         return players.isEmpty();
     }
     public boolean isExpired() {
         long now = System.currentTimeMillis();
-        boolean expired = now - lastInteractionTime > SESSION_TIMEOUT_MS;
-        if (expired) {
-        }
-        return expired;
+        return now - lastInteractionTime > SESSION_TIMEOUT_MS;
+    }
+    public BlockPos getBlockPos() {
+        return blockPos;
     }
 }

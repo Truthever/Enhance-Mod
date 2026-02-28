@@ -2,6 +2,7 @@ package com.weaponhouse.enhance.network;
 
 import net.minecraft.network.PacketBuffer;
 import net.minecraftforge.fml.network.NetworkEvent;
+
 import java.util.function.Supplier;
 public class ConfigSyncPacket {
     private final boolean bossbarEnabled;
@@ -16,9 +17,7 @@ public class ConfigSyncPacket {
     }
     public static void handle(ConfigSyncPacket packet, Supplier<NetworkEvent.Context> contextSupplier) {
         NetworkEvent.Context context = contextSupplier.get();
-        context.enqueueWork(() -> {
-            com.weaponhouse.enhance.client.ClientConfigCache.setBossbarEnabled(packet.bossbarEnabled);
-        });
+        context.enqueueWork(() -> com.weaponhouse.enhance.client.ClientConfigCache.setBossbarEnabled(packet.bossbarEnabled));
         context.setPacketHandled(true);
     }
 }

@@ -15,11 +15,11 @@ import net.minecraft.util.SoundEvents;
 import net.minecraft.util.text.StringTextComponent;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.fml.common.Mod;
 
 import java.util.ArrayList;
 import java.util.List;
-@Mod.EventBusSubscriber (modid = "enhance", value = Dist.CLIENT)
+import java.util.Objects;
+
 @OnlyIn (Dist.CLIENT)
 public class SpeedReducerScreen extends Screen {
     private static final ResourceLocation TEXTURE = new ResourceLocation("enhance", "textures/gui/speed_reducer.png");
@@ -40,12 +40,13 @@ public class SpeedReducerScreen extends Screen {
     private static final int[] ARROW_AREA = {71, 21, 92, 34};
     private static final int[] DARK_ARROW_UV = {0, 48, 21, 61};
     private static final int[] BRIGHT_ARROW_UV = {71, 21, 92, 34};
-    private List<TextFieldWidget> rightInputFields = new ArrayList<>();
+    private final List<TextFieldWidget> rightInputFields = new ArrayList<>();
     private float currentSpeed;
     private int guiLeft;
     private int guiTop;
     private int successMessageTimer = 0;
     private String successMessage = "";
+    @OnlyIn (Dist.CLIENT)
     public SpeedReducerScreen() {
         super(new StringTextComponent("Speed Reducer"));
     }
@@ -69,9 +70,7 @@ public class SpeedReducerScreen extends Screen {
             textField.setTextColor(0xFFFFFF);
             textField.setEnableBackgroundDrawing(false);
             final int index = i;
-            textField.setResponder(s -> {
-                validateInput(index);
-            });
+            textField.setResponder(s -> validateInput(index));
             rightInputFields.add(textField);
             this.addButton(textField);
         }
@@ -85,7 +84,7 @@ public class SpeedReducerScreen extends Screen {
             if (player.getPersistentData().contains("BaseMovementSpeed")) {
                 currentSpeed = player.getPersistentData().getFloat("BaseMovementSpeed");
             } else {
-                currentSpeed = (float) player.getAttribute(Attributes.MOVEMENT_SPEED).getBaseValue();
+                currentSpeed = (float) Objects.requireNonNull(player.getAttribute(Attributes.MOVEMENT_SPEED)).getBaseValue();
             }
             currentSpeed = Math.max(0.0F, Math.min(1.0F, currentSpeed));
         } else {
@@ -162,8 +161,8 @@ public class SpeedReducerScreen extends Screen {
         drawCenteredString(matrixStack, font, integerPart,
                 guiLeft + (LEFT_DISPLAY_BOXES[0][0] + LEFT_DISPLAY_BOXES[0][2]) / 2,
                 guiTop + LEFT_DISPLAY_BOXES[0][1] + 3, 0xFFFFFF);
-        String decimalPart = parts.length > 1 ? parts[1] : "000";
-        while (decimalPart.length() < 3) decimalPart += "0";
+        StringBuilder decimalPart = new StringBuilder(parts.length > 1 ? parts[1] : "000");
+        while (decimalPart.length() < 3) decimalPart.append("0");
         for (int i = 0; i < 3; i++) {
             drawCenteredString(matrixStack, font,
                     String.valueOf(decimalPart.charAt(i)),
@@ -230,7 +229,9 @@ public class SpeedReducerScreen extends Screen {
     @Override
     public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
         if (keyCode == 256) {
-            this.minecraft.displayGuiScreen(null);
+            if (this.minecraft != null) {
+                this.minecraft.displayGuiScreen(null);
+            }
             return true;
         }
         for (TextFieldWidget field : rightInputFields) {

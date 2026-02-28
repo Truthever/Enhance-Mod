@@ -7,28 +7,22 @@ import net.minecraft.entity.ai.attributes.ModifiableAttributeInstance;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraftforge.event.entity.EntityJoinWorldEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
 
 import java.util.UUID;
-@Mod.EventBusSubscriber(modid = "enhance")
 public class LifeHandler {
     private static final String BUFF_TAG = "WeaponHouseBuffs";
     public static final String LIFE_TAG = "life";
     public static final String INTERNAL_ORIGINAL_MAX_HEALTH = "Enhance_Internal_OriginalMaxHealth";
     public static final UUID LIFE_MODIFIER_UUID = UUID.fromString("d6d8b9d7-1a1b-4c8c-9f9a-0e7e6d5c4b3a");
     public static final float HEALTH_BONUS_PER_LEVEL = 0.05f;
-    @SubscribeEvent
     public static void onEntityJoinWorld(EntityJoinWorldEvent event) {
         if (event.getEntity() instanceof LivingEntity) {
             applyLifeBuff((LivingEntity) event.getEntity());
         }
     }
-    @SubscribeEvent
     public static void onPlayerLoggedIn(PlayerEvent.PlayerLoggedInEvent event) {
         applyLifeBuff(event.getPlayer());
     }
-    @SubscribeEvent
     public static void onPlayerRespawn(PlayerEvent.PlayerRespawnEvent event) {
         applyLifeBuff(event.getPlayer());
     }
@@ -40,15 +34,7 @@ public class LifeHandler {
             restoreOriginalMaxHealth(entity, maxHealthAttr);
             return;
         }
-        CompoundNBT entityData = entity.getPersistentData();
-        double originalBaseHealth;
-        if (!entityData.contains(INTERNAL_ORIGINAL_MAX_HEALTH)) {
-            originalBaseHealth = maxHealthAttr.getBaseValue();
-            entityData.putDouble(INTERNAL_ORIGINAL_MAX_HEALTH, originalBaseHealth);
-        } else {
-            originalBaseHealth = entityData.getDouble(INTERNAL_ORIGINAL_MAX_HEALTH);
-        }
-        double totalHealthWithBonus = originalBaseHealth * (1 + lifeLevel * HEALTH_BONUS_PER_LEVEL);
+        double totalHealthWithBonus = getTotalHealthWithBonus(entity, maxHealthAttr, lifeLevel);
         double adjustment = totalHealthWithBonus - maxHealthAttr.getBaseValue();
         AttributeModifier existing = maxHealthAttr.getModifier(LIFE_MODIFIER_UUID);
         if (existing != null) {
@@ -65,6 +51,18 @@ public class LifeHandler {
         if (entity.getHealth() > newMaxHealth) {
             entity.setHealth(newMaxHealth);
         }
+    }
+
+    private static double getTotalHealthWithBonus(LivingEntity entity, ModifiableAttributeInstance maxHealthAttr, int lifeLevel) {
+        CompoundNBT entityData = entity.getPersistentData();
+        double originalBaseHealth;
+        if (!entityData.contains(INTERNAL_ORIGINAL_MAX_HEALTH)) {
+            originalBaseHealth = maxHealthAttr.getBaseValue();
+            entityData.putDouble(INTERNAL_ORIGINAL_MAX_HEALTH, originalBaseHealth);
+        } else {
+            originalBaseHealth = entityData.getDouble(INTERNAL_ORIGINAL_MAX_HEALTH);
+        }
+        return originalBaseHealth * (1 + lifeLevel * HEALTH_BONUS_PER_LEVEL);
     }
     public static void restoreOriginalMaxHealth(LivingEntity entity, ModifiableAttributeInstance maxHealthAttr) {
         if (maxHealthAttr == null || entity.world.isRemote) return;

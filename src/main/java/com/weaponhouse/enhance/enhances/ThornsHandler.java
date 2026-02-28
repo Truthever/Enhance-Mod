@@ -6,9 +6,6 @@ import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.util.DamageSource;
 import net.minecraft.util.EntityDamageSource;
 import net.minecraftforge.event.entity.living.LivingHurtEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
-@Mod.EventBusSubscriber(modid = "enhance")
 public class ThornsHandler {
     private static final String BUFF_TAG = "WeaponHouseBuffs";
     private static final String THORNS_TAG = "thorns";
@@ -19,16 +16,12 @@ public class ThornsHandler {
             this.setDamageBypassesArmor();
             this.setMagicDamage();
         }
-        public boolean isThornsDamage() {
-            return true;
-        }
     }
-    @SubscribeEvent
     public static void onLivingHurt(LivingHurtEvent event) {
         LivingEntity victim = event.getEntityLiving();
         DamageSource source = event.getSource();
         Entity attacker = source.getImmediateSource();
-        if (attacker == null || !(attacker instanceof LivingEntity)) {
+        if (!(attacker instanceof LivingEntity)) {
             return;
         }
         LivingEntity livingAttacker = (LivingEntity) attacker;

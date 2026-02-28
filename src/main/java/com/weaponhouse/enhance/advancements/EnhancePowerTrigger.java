@@ -19,9 +19,7 @@ public class EnhancePowerTrigger extends AbstractCriterionTrigger<EnhancePowerTr
         return new Instance(entityPredicate);
     }
     public void trigger(ServerPlayerEntity player) {
-        this.triggerListeners(player, instance -> {
-            return instance.test();
-        });
+        this.triggerListeners(player, instance -> true);
     }
     public static class Instance extends CriterionInstance {
         public Instance(EntityPredicate.AndPredicate player) {
@@ -30,9 +28,6 @@ public class EnhancePowerTrigger extends AbstractCriterionTrigger<EnhancePowerTr
         @Override
         public JsonObject serialize(ConditionArraySerializer conditions) {
             return super.serialize(conditions);
-        }
-        public boolean test() {
-            return true;
         }
     }
 }

@@ -1,10 +1,10 @@
 package com.weaponhouse.enhance.enhances;
 
 import com.weaponhouse.enhance.Enhance;
-import com.weaponhouse.enhance.commands.EnhanceCommand;
-import com.weaponhouse.enhance.util.ConfigLoader;
+import com.weaponhouse.enhance.data.PlayerDataManager;
+import com.weaponhouse.enhance.events.AdvancementEventHandler;
 import com.weaponhouse.enhance.util.GiftAchievementHelper;
-import net.minecraft.client.resources.I18n;
+import com.weaponhouse.enhance.util.GiftConfigReader;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.item.ItemStack;
@@ -15,37 +15,23 @@ import net.minecraft.util.SoundCategory;
 import net.minecraft.util.SoundEvents;
 import net.minecraft.util.text.StringTextComponent;
 import net.minecraft.util.text.TextFormatting;
+import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraft.world.Difficulty;
 import net.minecraft.world.World;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Random;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 @Mod.EventBusSubscriber(modid = "enhance")
 public class RedGiftHandler {
     private static final String RED_GIFT_ID = "enhance:red_gift";
     public static final String KEY_MULTI_BUFF = "message.enhance.red_gift.multi";
-    public static final String KEY_LIFE_TRIGGER = "message.enhance.red_gift.life_trigger";
-    private static final String FIRST_RED_GIFT_MARK = "first_red_gift_opened";
-    private static String getLocalizedBuffName(String buffKey) {
-        String translationKey = "buff.enhance." + buffKey;
-        return I18n.format(translationKey, buffKey);
-    }
-    private static void sendMultiBuffFeedbackToPlayer(ServerPlayerEntity player, List<String> obtainedBuffs) {
-        StringBuilder buffsText = new StringBuilder();
-        for (String buffInfo : obtainedBuffs) {
-            buffsText.append(buffInfo).append("\n- ");
-        }
-        if (buffsText.length() > 0) {
-            buffsText.delete(buffsText.length() - 3, buffsText.length());
-        }
-        String message = I18n.format(
-                RedGiftHandler.KEY_MULTI_BUFF,
-                obtainedBuffs.size(),
-                buffsText.toString()
-        );
-        player.sendMessage(new StringTextComponent(message), player.getUniqueID());
-    }
+    private static final ConcurrentHashMap<UUID, Long> lastRedGiftProcessTime = new ConcurrentHashMap<>();
+    private static final long RED_GIFT_COOLDOWN_MS = 1000L;
     @SubscribeEvent
     public static void onRedGiftRightClick(PlayerInteractEvent.RightClickItem event) {
         if (event.getWorld().isRemote) return;
@@ -55,10 +41,21 @@ public class RedGiftHandler {
         World world = event.getWorld();
         if (!isRedGiftItem(heldStack)) return;
         if (!(player instanceof ServerPlayerEntity)) return;
+        ServerPlayerEntity serverPlayer = (ServerPlayerEntity) player;
+        UUID playerId = serverPlayer.getUniqueID();
+        long currentTime = System.currentTimeMillis();
+        if (lastRedGiftProcessTime.containsKey(playerId)) {
+            long lastTime = lastRedGiftProcessTime.get(playerId);
+            if (currentTime - lastTime < RED_GIFT_COOLDOWN_MS) {
+                return;
+            }
+        }
+        lastRedGiftProcessTime.put(playerId, currentTime);
         Difficulty worldDifficulty = world.getDifficulty();
-        executeRedGiftFunction((ServerPlayerEntity) player, heldStack, worldDifficulty);
+        executeRedGiftFunction(serverPlayer, heldStack, worldDifficulty);
         event.setCancellationResult(ActionResultType.SUCCESS);
         event.setCanceled(true);
+        cleanupOldEntries();
     }
     private static boolean isRedGiftItem(ItemStack stack) {
         if (stack.getItem().getRegistryName() == null) {
@@ -67,21 +64,27 @@ public class RedGiftHandler {
         return stack.getItem().getRegistryName().toString().equals(RED_GIFT_ID);
     }
     private static void executeRedGiftFunction(ServerPlayerEntity player, ItemStack giftStack, Difficulty difficulty) {
-        int buffCount = ConfigLoader.RED_GIFT_BUFF_COUNT;
-        buffCount = Math.max(1, buffCount);
+        GiftConfigReader.GiftConfig config = GiftConfigReader.readGiftConfig("red_gift");
+        int buffCount = Math.max(1, config.buffCount);
         List<String> obtainedBuffs = new ArrayList<>();
         boolean lifeBuffApplied = false;
+        boolean attackBuffApplied = false;
         for (int i = 0; i < buffCount; i++) {
-            String randomBuffKey = getRandomBuffKey(difficulty);
-            int randomBuffLevel = getRandomBuffLevel(randomBuffKey, difficulty);
+            String randomBuffKey = getRandomBuffKey(config, difficulty);
+            int randomBuffLevel = getRandomBuffLevel(config, randomBuffKey, difficulty);
             String finalRandomBuffKey = randomBuffKey;
             while (obtainedBuffs.stream().anyMatch(buff -> buff.contains(finalRandomBuffKey))) {
-                randomBuffKey = getRandomBuffKey(difficulty);
+                randomBuffKey = getRandomBuffKey(config, difficulty);
+                randomBuffLevel = getRandomBuffLevel(config, randomBuffKey, difficulty);
             }
             saveBuffToPlayerNBT(player, randomBuffKey, randomBuffLevel);
             if (!lifeBuffApplied && "life".equals(randomBuffKey)) {
                 triggerLifeBuffEffect(player);
                 lifeBuffApplied = true;
+            }
+            if (!attackBuffApplied && "attack".equals(randomBuffKey)) {
+                triggerAttackBuffEffect(player);
+                attackBuffApplied = true;
             }
             String localizedBuffName = getLocalizedBuffName(randomBuffKey);
             obtainedBuffs.add(String.format("%s Lv.%d", localizedBuffName, randomBuffLevel));
@@ -93,33 +96,37 @@ public class RedGiftHandler {
         consumeRedGiftItem(player, giftStack);
     }
     private static void checkAndTriggerFirstRedGiftRewards(ServerPlayerEntity player) {
-        CompoundNBT playerNBT = player.getPersistentData();
-        CompoundNBT buffsData = playerNBT.getCompound(EnhanceCommand.BUFF_TAG);
-        if (!playerNBT.getBoolean(FIRST_RED_GIFT_MARK)) {
+        CompoundNBT permanentData = AdvancementEventHandler.getPermanentData(player);
+        String redGiftTriggeredKey = "red_gift_triggered";
+        String redGiftLevelIncreasedKey = "red_gift_level_increased";
+        if (!permanentData.getBoolean(redGiftTriggeredKey)) {
             try {
+                permanentData.putBoolean(redGiftTriggeredKey, true);
                 if (Enhance.EXTREME_REALM_TRIGGER != null) {
+                    Enhance.LOGGER.info("[DEBUG] 触发极致领域成就");
                     Enhance.EXTREME_REALM_TRIGGER.trigger(player);
                 }
-                int currentLevel = buffsData.getInt(EnhanceCommand.ENHANCE_LEVEL_TAG);
-                int newLevel = Math.min(currentLevel + 1, EnhanceCommand.MAX_ENHANCE_LEVEL);
-                newLevel = Math.max(newLevel, 1); // 确保最低为1级
-                buffsData.putInt(EnhanceCommand.ENHANCE_LEVEL_TAG, newLevel);
-                playerNBT.put(EnhanceCommand.BUFF_TAG, buffsData);
-                player.sendMessage(
-                        new StringTextComponent(TextFormatting.GREEN + I18n.format(
-                                "command.enhance.level_up", newLevel
-                        )),
-                        player.getUniqueID()
-                );
-                playerNBT.putBoolean(FIRST_RED_GIFT_MARK, true);
-                syncPlayerData(player);
-            } catch (Exception e) {
-            }
+                if (!permanentData.getBoolean(redGiftLevelIncreasedKey)) {
+                    CompoundNBT fullData = PlayerDataManager.getPermanentPlayerData(player);
+                    CompoundNBT buffs = fullData.contains("Buffs") ? fullData.getCompound("Buffs") : new CompoundNBT();
+                    int currentLevel = buffs.getInt(AdvancementEventHandler.ENHANCE_LEVEL_TAG);
+                    int newLevel = Math.min(currentLevel + 1, AdvancementEventHandler.MAX_ENHANCE_LEVEL);
+                    if (newLevel > currentLevel) {
+                        buffs.putInt(AdvancementEventHandler.ENHANCE_LEVEL_TAG, newLevel);
+                        fullData.put("Buffs", buffs);
+                        PlayerDataManager.savePermanentPlayerData(player, fullData);
+                        player.getPersistentData().put(AdvancementEventHandler.BUFF_TAG, buffs);
+                        player.sendMessage(
+                                new TranslationTextComponent("command.enhance.level_up", newLevel)
+                                        .mergeStyle(TextFormatting.GREEN),
+                                player.getUniqueID()
+                        );
+                        permanentData.putBoolean(redGiftLevelIncreasedKey, true);
+                    }
+                }
+                AdvancementEventHandler.savePermanentData(player, permanentData);
+            } catch (Exception ignored) {}
         }
-    }
-    private static void syncPlayerData(ServerPlayerEntity player) {
-        player.refreshDisplayName();
-        player.setHealth(player.getHealth());
     }
     private static void playUpgradeSound(ServerPlayerEntity player) {
         World world = player.world;
@@ -136,22 +143,12 @@ public class RedGiftHandler {
     }
     private static void triggerLifeBuffEffect(ServerPlayerEntity player) {
         LifeHandler.applyLifeBuff(player);
-        String message = I18n.format(RedGiftHandler.KEY_LIFE_TRIGGER);
-        player.sendMessage(new StringTextComponent(message), player.getUniqueID());
     }
-    private static String getRandomBuffKey(Difficulty difficulty) {
-        List<String> targetBuffPool;
-        if (isEasyOrNormal(difficulty)) {
-            targetBuffPool = ConfigLoader.RED_GIFT_AVAILABLE_BUFFS;
-        } else {
-            List<String> monsterHardBuffPool = ConfigLoader.TIER_THREE_BUFFS_BY_DIFFICULTY.getOrDefault("hard", new ArrayList<>());
-            targetBuffPool = new ArrayList<>();
-            for (String buff : monsterHardBuffPool) {
-                if (ConfigLoader.RED_GIFT_AVAILABLE_BUFFS.contains(buff)) {
-                    targetBuffPool.add(buff);
-                }
-            }
-        }
+    private static void triggerAttackBuffEffect(ServerPlayerEntity player) {
+        AttackHandler.applyAttackBuff(player);
+    }
+    private static String getRandomBuffKey(GiftConfigReader.GiftConfig config, Difficulty difficulty) {
+        List<String> targetBuffPool = config.availableBuffs;
         if (targetBuffPool.isEmpty()) {
             return "life";
         }
@@ -159,22 +156,10 @@ public class RedGiftHandler {
         int randomIndex = random.nextInt(targetBuffPool.size());
         return targetBuffPool.get(randomIndex);
     }
-    private static int getRandomBuffLevel(String buffKey, Difficulty difficulty) {
-        Map<String, int[]> targetLevelRanges;
-        int[] defaultRange = new int[]{1, 1};
-        if (isEasyOrNormal(difficulty)) {
-            targetLevelRanges = ConfigLoader.RED_GIFT_BUFF_RANGES;
-        } else {
-            if (!ConfigLoader.RED_GIFT_HARD_BUFF_RANGES.isEmpty()) {
-                targetLevelRanges = ConfigLoader.RED_GIFT_HARD_BUFF_RANGES;
-            } else {
-                targetLevelRanges = new HashMap<>();
-                loadDefaultRedGiftHardLevelRanges(targetLevelRanges);
-            }
-        }
-        int[] levelRange = targetLevelRanges.getOrDefault(buffKey, defaultRange);
-        int minLevel = Math.max(1, levelRange[0]);
-        int maxLevel = Math.max(minLevel, levelRange[1]);
+    private static int getRandomBuffLevel(GiftConfigReader.GiftConfig config, String buffKey, Difficulty difficulty) {
+        int[] levelRange = config.buffRanges.getOrDefault(buffKey, new int[]{1, 1});
+        int minLevel = levelRange[0];
+        int maxLevel = levelRange[1];
         if (minLevel == maxLevel) {
             return minLevel;
         } else {
@@ -182,30 +167,12 @@ public class RedGiftHandler {
             return minLevel + random.nextInt(maxLevel - minLevel + 1);
         }
     }
-    private static void loadDefaultRedGiftHardLevelRanges(Map<String, int[]> targetMap) {
-        targetMap.clear();
-        targetMap.put("harmony", new int[]{15, 45});
-        targetMap.put("unyielding", new int[]{5, 15});
-        targetMap.put("thorns", new int[]{10, 25});
-        targetMap.put("rob", new int[]{5, 15});
-        targetMap.put("megaforce", new int[]{15, 40});
-        targetMap.put("thunder", new int[]{20, 50});
-        targetMap.put("life", new int[]{30, 60});
-        targetMap.put("hunger", new int[]{20, 50});
-        targetMap.put("phantom", new int[]{6, 8});
-        targetMap.put("photosynthesis", new int[]{15, 30});
-        targetMap.put("frost", new int[]{30, 60});
-        targetMap.put("attack", new int[]{30, 60});
-        targetMap.put("vampire", new int[]{12, 25});
-        targetMap.put("curse", new int[]{10, 25});
-        targetMap.put("death_bomb", new int[]{15, 40});
-        targetMap.put("ricochet", new int[]{5, 5});
-        targetMap.put("displacement", new int[]{5, 15});
-    }
-    private static boolean isEasyOrNormal(Difficulty difficulty) {
-        return difficulty == Difficulty.EASY || difficulty == Difficulty.NORMAL;
-    }
     private static void saveBuffToPlayerNBT(ServerPlayerEntity player, String buffKey, int level) {
+        CompoundNBT fullData = PlayerDataManager.getPermanentPlayerData(player);
+        CompoundNBT buffs = fullData.contains("Buffs") ? fullData.getCompound("Buffs") : new CompoundNBT();
+        buffs.putInt(buffKey, level);
+        fullData.put("Buffs", buffs);
+        PlayerDataManager.savePermanentPlayerData(player, fullData);
         CompoundNBT playerPersistentData = player.getPersistentData();
         CompoundNBT weaponHouseBuffsTag;
         if (playerPersistentData.contains("WeaponHouseBuffs")) {
@@ -221,5 +188,29 @@ public class RedGiftHandler {
             return;
         }
         giftStack.shrink(1);
+    }
+    private static String getLocalizedBuffName(String buffKey) {
+        return new TranslationTextComponent("buff.enhance." + buffKey).getString();
+    }
+    private static void sendMultiBuffFeedbackToPlayer(ServerPlayerEntity player, List<String> obtainedBuffs) {
+        StringBuilder buffsText = new StringBuilder();
+        for (String buffInfo : obtainedBuffs) {
+            buffsText.append(buffInfo).append("\n- ");
+        }
+        if (buffsText.length() > 0) {
+            buffsText.delete(buffsText.length() - 3, buffsText.length());
+        }
+        TranslationTextComponent message = new TranslationTextComponent(
+                RedGiftHandler.KEY_MULTI_BUFF,
+                obtainedBuffs.size(),
+                buffsText.toString()
+        );
+        player.sendMessage(new StringTextComponent(message.getString()), player.getUniqueID());
+    }
+    private static void cleanupOldEntries() {
+        long currentTime = System.currentTimeMillis();
+        lastRedGiftProcessTime.entrySet().removeIf(entry ->
+                currentTime - entry.getValue() > RED_GIFT_COOLDOWN_MS * 5
+        );
     }
 }

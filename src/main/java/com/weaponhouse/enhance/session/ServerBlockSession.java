@@ -1,4 +1,5 @@
 package com.weaponhouse.enhance.session;
+
 import net.minecraft.util.math.BlockPos;
 import java.util.*;
 public class ServerBlockSession {
@@ -8,17 +9,10 @@ public class ServerBlockSession {
     public ServerBlockSession(BlockPos pos) {
         this.pos = pos;
     }
-    public boolean addPlayer(UUID playerUUID) {
+    public void addPlayer(UUID playerUUID) {
         if (players.size() < 2) {
             players.add(playerUUID);
             isInteracting.put(playerUUID, false);
-            return true;
-        }
-        return false;
-    }
-    public void removePlayer(UUID playerUUID) {
-        if (players.remove(playerUUID)) {
-            isInteracting.remove(playerUUID);
         }
     }
     public boolean isEmpty() {

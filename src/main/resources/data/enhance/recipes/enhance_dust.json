@@ -1,0 +1,13 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "ingredients": [
+    {
+      "item": "enhance:enhance_stone"
+    }
+  ],
+  "result": {
+    "item": "enhance:enhance_dust",
+    "count": 3
+  },
+  "group": "enhance_decomposition"
+}

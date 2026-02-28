@@ -4,35 +4,36 @@ import com.weaponhouse.enhance.effects.EffectRegistry;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.projectile.AbstractArrowEntity;
+import net.minecraft.entity.projectile.ThrowableEntity;
+import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.potion.EffectInstance;
 import net.minecraft.util.math.EntityRayTraceResult;
 import net.minecraft.util.math.RayTraceResult;
 import net.minecraftforge.event.entity.ProjectileImpactEvent;
 import net.minecraftforge.event.entity.living.LivingAttackEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraft.nbt.CompoundNBT;
-@Mod.EventBusSubscriber(modid = "enhance")
 public class FrostHandler {
     private static final String BUFF_TAG = "WeaponHouseBuffs";
     private static final String FROST_TAG = "frost";
-    @SubscribeEvent
     public static void onLivingAttack(LivingAttackEvent event) {
         if (event.getSource().getImmediateSource() instanceof LivingEntity) {
             LivingEntity attacker = (LivingEntity) event.getSource().getImmediateSource();
             tryApplyFrost(attacker, event.getEntityLiving());
         }
     }
-    @SubscribeEvent
-    public static void onArrowHit(ProjectileImpactEvent.Arrow event) {
-        AbstractArrowEntity arrow = event.getArrow();
-        if (arrow.getShooter() instanceof LivingEntity) {
-            LivingEntity shooter = (LivingEntity) arrow.getShooter();
-            if (event.getRayTraceResult().getType() == RayTraceResult.Type.ENTITY) {
-                Entity target = ((EntityRayTraceResult)event.getRayTraceResult()).getEntity();
-                if (target instanceof LivingEntity) {
-                    tryApplyFrost(shooter, (LivingEntity)target);
-                }
+    public static void onProjectileImpact(ProjectileImpactEvent event) {
+        LivingEntity shooter = null;
+        if (event.getEntity() instanceof AbstractArrowEntity) {
+            AbstractArrowEntity arrow = (AbstractArrowEntity) event.getEntity();
+            shooter = (LivingEntity) arrow.getShooter();
+        } else if (event.getEntity() instanceof ThrowableEntity) {
+            ThrowableEntity throwable = (ThrowableEntity) event.getEntity();
+            shooter = (LivingEntity) throwable.getShooter();
+        }
+        if (shooter == null) return;
+        if (event.getRayTraceResult().getType() == RayTraceResult.Type.ENTITY) {
+            Entity target = ((EntityRayTraceResult) event.getRayTraceResult()).getEntity();
+            if (target instanceof LivingEntity) {
+                tryApplyFrost(shooter, (LivingEntity) target);
             }
         }
     }
@@ -46,7 +47,16 @@ public class FrostHandler {
         }
     }
     private static void applySlowness(LivingEntity target, int level) {
-        int effectLevel = Math.min(3, (level - 1) / 5 + 1) - 1;
+        int effectLevel;
+        if (level <= 10) {
+            effectLevel = 0;
+        } else if (level <= 20) {
+            effectLevel = 1;
+        } else if (level <= 30) {
+            effectLevel = 2;
+        } else {
+            effectLevel = 3;
+        }
         int durationTicks = 20 * 2 * level;
         target.addPotionEffect(new EffectInstance(
                 EffectRegistry.FROST,

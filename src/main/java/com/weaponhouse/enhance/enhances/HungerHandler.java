@@ -3,26 +3,23 @@ package com.weaponhouse.enhance.enhances;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.projectile.AbstractArrowEntity;
+import net.minecraft.entity.projectile.ThrowableEntity;
+import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.potion.Effect;
 import net.minecraft.potion.EffectInstance;
 import net.minecraft.potion.Effects;
 import net.minecraft.util.DamageSource;
 import net.minecraft.util.math.EntityRayTraceResult;
 import net.minecraft.util.math.RayTraceResult;
+import net.minecraftforge.common.util.Constants;
 import net.minecraftforge.event.entity.ProjectileImpactEvent;
 import net.minecraftforge.event.entity.living.LivingAttackEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraft.nbt.CompoundNBT;
-import net.minecraftforge.common.util.Constants;
-@Mod.EventBusSubscriber(modid = "enhance", bus = Mod.EventBusSubscriber.Bus.FORGE)
 public class HungerHandler {
     private static final String BUFF_TAG = "WeaponHouseBuffs";
     private static final String HUNGER_TAG = "hunger";
     private static final int BASE_DURATION_SEC = 10;
     private static final int ADD_DURATION_PER_LEVEL = 3;
     private static final Effect ORIGINAL_HUNGER_EFFECT = Effects.HUNGER;
-    @SubscribeEvent
     public static void onLivingAttack(LivingAttackEvent event) {
         DamageSource source = event.getSource();
         if (source instanceof ThornsHandler.ThornsDamageSource) {
@@ -32,17 +29,24 @@ public class HungerHandler {
         if (!(event.getSource().getImmediateSource() instanceof LivingEntity)) return;
         if (!(event.getEntityLiving() instanceof LivingEntity)) return;
         LivingEntity attacker = (LivingEntity) event.getSource().getImmediateSource();
-        LivingEntity target = (LivingEntity) event.getEntityLiving();
+        LivingEntity target = event.getEntityLiving();
         if (hasHungerBuff(attacker)) {
             int hungerLevel = getHungerBuffLevel(attacker);
             applyOriginalHungerEffect(target, hungerLevel);
         }
     }
-    @SubscribeEvent
-    public static void onArrowHit(ProjectileImpactEvent.Arrow event) {
-        if (event.getArrow().world.isRemote) return;
-        AbstractArrowEntity arrow = event.getArrow();
-        if (!(arrow.getShooter() instanceof LivingEntity)) return;
+    public static void onProjectileImpact(ProjectileImpactEvent event) {
+        if (event.getEntity().world.isRemote) return;
+        LivingEntity shooter = null;
+        if (event.getEntity() instanceof AbstractArrowEntity) {
+            AbstractArrowEntity arrow = (AbstractArrowEntity) event.getEntity();
+            shooter = (LivingEntity) arrow.getShooter();
+        }
+        else if (event.getEntity() instanceof ThrowableEntity) {
+            ThrowableEntity throwable = (ThrowableEntity) event.getEntity();
+            shooter = (LivingEntity) throwable.getShooter();
+        }
+        if (shooter == null || !hasHungerBuff(shooter)) return;
         RayTraceResult traceResult = event.getRayTraceResult();
         if (traceResult.getType() != RayTraceResult.Type.ENTITY) return;
         EntityRayTraceResult entityTrace = (EntityRayTraceResult) traceResult;
@@ -50,12 +54,9 @@ public class HungerHandler {
         if (!(hitEntity instanceof LivingEntity)) {
             return;
         }
-        LivingEntity shooter = (LivingEntity) arrow.getShooter();
         LivingEntity target = (LivingEntity) hitEntity;
-        if (hasHungerBuff(shooter)) {
-            int hungerLevel = getHungerBuffLevel(shooter);
-            applyOriginalHungerEffect(target, hungerLevel);
-        }
+        int hungerLevel = getHungerBuffLevel(shooter);
+        applyOriginalHungerEffect(target, hungerLevel);
     }
     private static boolean hasHungerBuff(LivingEntity entity) {
         CompoundNBT entityData = entity.getPersistentData();

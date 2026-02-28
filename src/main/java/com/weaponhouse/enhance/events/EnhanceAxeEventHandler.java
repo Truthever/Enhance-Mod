@@ -1,24 +1,25 @@
 package com.weaponhouse.enhance.events;
 
 import com.weaponhouse.enhance.items.EnhanceAxeItem;
+import net.minecraft.block.Block;
+import net.minecraft.block.BlockState;
+import net.minecraft.block.material.Material;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.material.Material;
 import net.minecraftforge.event.world.BlockEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
+
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
 @Mod.EventBusSubscriber(modid = "enhance")
 public class EnhanceAxeEventHandler {
-    private static final int HORIZONTAL_RANGE = 4; // 横向最大距离
-    private static final int VERTICAL_RANGE = 30;  // 纵向总范围
+    private static final int HORIZONTAL_RANGE = 4;
+    private static final int VERTICAL_RANGE = 30;
     @SubscribeEvent
     public static void onAxeBlockBreak(BlockEvent.BreakEvent event) {
         World world = (World) event.getWorld();
@@ -37,8 +38,10 @@ public class EnhanceAxeEventHandler {
                 || breakState.getBlockHardness(world, breakPos) < 0) {
             return;
         }
+        if (!EnhanceAxeItem.consumeCharge(heldAxe, EnhanceAxeItem.getChainChargeCost())) {
+            return;
+        }
         Block targetWood = breakMaterial == Material.WOOD ? breakState.getBlock() : null;
-        boolean isLeafMode = breakMaterial == Material.LEAVES;
         boolean chainLeaves = EnhanceAxeItem.isLeafChainEnabled(heldAxe);
         List<BlockPos> allBlockPos = new ArrayList<>();
         Queue<BlockPos> queue = new LinkedList<>();
@@ -82,9 +85,9 @@ public class EnhanceAxeEventHandler {
             int damage = 1;
             for (BlockPos pos : allBlockPos) {
                 Material mat = world.getBlockState(pos).getMaterial();
-                damage += mat == Material.WOOD ? 1 : 0.5;
+                damage += mat == Material.WOOD ? 1 : 0;
             }
-            heldAxe.damageItem((int) Math.ceil(damage), player, p -> p.sendBreakAnimation(player.getActiveHand()));
+            heldAxe.damageItem((int) (double) damage, player, p -> p.sendBreakAnimation(player.getActiveHand()));
         }
     }
     private static boolean isWithinRange(BlockPos center, BlockPos target) {

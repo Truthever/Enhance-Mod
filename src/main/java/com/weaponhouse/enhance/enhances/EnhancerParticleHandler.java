@@ -6,18 +6,14 @@ import net.minecraft.util.math.vector.Vector3d;
 import net.minecraft.world.World;
 import net.minecraft.world.server.ServerWorld;
 import net.minecraftforge.event.entity.living.LivingEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
-
 import java.util.HashMap;
 import java.util.Map;
-@Mod.EventBusSubscriber(modid = "enhance")
+
 public class EnhancerParticleHandler {
     private static final Map<LivingEntity, Integer> particleCounter = new HashMap<>();
-    private static final RedstoneParticleData GREEN_PARTICLE = new RedstoneParticleData(0.0F, 1.0F, 0.0F, 2.0F);
-    private static final RedstoneParticleData BLUE_PARTICLE = new RedstoneParticleData(0.0F, 0.0F, 1.0F, 2.0F);
-    private static final RedstoneParticleData RED_PARTICLE = new RedstoneParticleData(1.0F, 0.0F, 0.0F, 2.0F);
-    @SubscribeEvent
+    private static final RedstoneParticleData GREEN_PARTICLE = new RedstoneParticleData(0.0F, 1.0F, 0.0F, 1.25F);
+    private static final RedstoneParticleData BLUE_PARTICLE  = new RedstoneParticleData(0.0F, 0.0F, 1.0F, 1.25F);
+    private static final RedstoneParticleData RED_PARTICLE   = new RedstoneParticleData(1.0F, 0.0F, 0.0F, 1.25F);
     public static void onEntityUpdate(LivingEvent.LivingUpdateEvent event) {
         LivingEntity entity = event.getEntityLiving();
         if (!entity.getTags().contains("one_enhance") &&
@@ -41,87 +37,117 @@ public class EnhancerParticleHandler {
         if (world instanceof ServerWorld) {
             ServerWorld serverWorld = (ServerWorld) world;
             Vector3d pos = entity.getPositionVec();
-            float entityHeight = entity.getHeight();
+            float h = entity.getHeight();
             switch (tier) {
                 case 1:
-                    spawnTier1Particles(serverWorld, entity, pos, entityHeight);
+                    spawnTier1Particles(serverWorld, entity, pos, h);
                     break;
                 case 2:
-                    spawnTier2Particles(serverWorld, entity, pos, entityHeight);
+                    spawnTier2Particles(serverWorld, entity, pos, h);
                     break;
                 case 3:
-                    spawnTier3Particles(serverWorld, entity, pos, entityHeight);
+                    spawnTier3Particles(serverWorld, entity, pos, h);
                     break;
             }
         }
     }
-    private static void spawnTier1Particles(ServerWorld serverWorld, LivingEntity entity, Vector3d pos, float entityHeight) {
-        int baseParticles = 8;
-        for (int i = 0; i < baseParticles; i++) {
-            double angle = entity.ticksExisted * 0.1 + i * Math.PI / (baseParticles / 2.0);
-            double radius = 0.9 + Math.sin(entity.ticksExisted * 0.15) * 0.2;
-            double x = Math.cos(angle) * radius;
-            double z = Math.sin(angle) * radius;
-            serverWorld.spawnParticle(
-                    GREEN_PARTICLE,
-                    pos.x + x,
-                    pos.y + entityHeight * 0.6,
-                    pos.z + z,
+    private static void spawnHelixRing(ServerWorld w, LivingEntity e, RedstoneParticleData p,
+                                       Vector3d pos, float entityHeight,
+                                       int points, double baseRadius, double radiusBreath,
+                                       double yBaseRatio, double yWaveAmp, double yWaveSpeed,
+                                       double angularSpeed, double phase) {
+        double t = e.ticksExisted;
+        double r = baseRadius + Math.sin(t * 0.12) * radiusBreath;
+        double yBase = pos.y + entityHeight * yBaseRatio;
+        for (int i = 0; i < points; i++) {
+            double a = t * angularSpeed + phase + (Math.PI * 2.0) * (i / (double) points);
+            double y = yBase + Math.sin(t * yWaveSpeed + i * 0.7) * yWaveAmp;
+            double x = Math.cos(a) * r;
+            double z = Math.sin(a) * r;
+            double jx = (e.getRNG().nextDouble() - 0.5) * 0.01;
+            double jy = (e.getRNG().nextDouble() - 0.5) * 0.01;
+            double jz = (e.getRNG().nextDouble() - 0.5) * 0.01;
+            w.spawnParticle(
+                    p,
+                    pos.x + x + jx,
+                    y + jy,
+                    pos.z + z + jz,
                     1,
-                    0, 0.02, 0,
-                    0.02
+                    0, 0, 0,
+                    0.0
             );
         }
     }
-    private static void spawnTier2Particles(ServerWorld serverWorld, LivingEntity entity, Vector3d pos, float entityHeight) {
-        int baseParticles = 10;
-        for (int i = 0; i < baseParticles; i++) {
-            double angle = entity.ticksExisted * 0.1 + i * Math.PI / (baseParticles / 2.0);
-            double radius = 0.9 + Math.sin(entity.ticksExisted * 0.15) * 0.2;
-            double x = Math.cos(angle) * radius;
-            double z = Math.sin(angle) * radius;
-            serverWorld.spawnParticle(
-                    BLUE_PARTICLE,
-                    pos.x + x,
-                    pos.y + entityHeight * 0.6,
-                    pos.z + z,
-                    1,
-                    0, 0.02, 0,
-                    0.02
-            );
-        }
+    private static void spawnTier1Particles(ServerWorld w, LivingEntity e, Vector3d pos, float h) {
+        spawnHelixRing(
+                w, e, GREEN_PARTICLE, pos, h,
+                10,
+                0.58,
+                0.06,
+                0.55,
+                0.03,
+                0.10,
+                0.12,
+                0.0
+        );
     }
-    private static void spawnTier3Particles(ServerWorld serverWorld, LivingEntity entity, Vector3d pos, float entityHeight) {
-        int baseParticles = 12;
-        for (int i = 0; i < baseParticles; i++) {
-            double angle = entity.ticksExisted * 0.1 + i * Math.PI / (baseParticles / 2.0);
-            double radius = 0.9 + Math.sin(entity.ticksExisted * 0.15) * 0.2;
-            double x = Math.cos(angle) * radius;
-            double z = Math.sin(angle) * radius;
-            serverWorld.spawnParticle(
-                    RED_PARTICLE,
-                    pos.x + x,
-                    pos.y + entityHeight * 0.6,
-                    pos.z + z,
-                    1,
-                    0, 0.02, 0,
-                    0.02
-            );
-        }
-        for (int i = 0; i < 6; i++) {
-            double angle = entity.ticksExisted * 0.05 + i * Math.PI / 3;
-            double radius = 0.7;
-            double x = Math.cos(angle) * radius;
-            double z = Math.sin(angle) * radius;
-            serverWorld.spawnParticle(
-                    RED_PARTICLE,
-                    pos.x + x,
-                    pos.y + entityHeight * 0.3,
-                    pos.z + z,
-                    1,
-                    0, 0.02, 0,
-                    0.02
-            );
-        }
+    private static void spawnTier2Particles(ServerWorld w, LivingEntity e, Vector3d pos, float h) {
+        spawnHelixRing(
+                w, e, BLUE_PARTICLE, pos, h,
+                12,
+                0.60,
+                0.07,
+                0.58,
+                0.035,
+                0.11,
+                0.14,
+                0.0
+        );
+        spawnHelixRing(
+                w, e, BLUE_PARTICLE, pos, h,
+                12,
+                0.52,
+                0.06,
+                0.40,
+                0.03,
+                0.12,
+                -0.13,
+                Math.PI / 12.0
+        );
+    }
+    private static void spawnTier3Particles(ServerWorld w, LivingEntity e, Vector3d pos, float h) {
+        spawnHelixRing(
+                w, e, RED_PARTICLE, pos, h,
+                14,
+                0.62,
+                0.08,
+                0.60,
+                0.04,
+                0.12,
+                0.16,
+                0.0
+        );
+        spawnHelixRing(
+                w, e, RED_PARTICLE, pos, h,
+                14,
+                0.54,
+                0.07,
+                0.42,
+                0.04,
+                0.13,
+                -0.15,
+                Math.PI / 10.0
+        );
+        spawnHelixRing(
+                w, e, RED_PARTICLE, pos, h,
+                10,
+                0.45,
+                0.04,
+                0.28,
+                0.02,
+                0.14,
+                0.10,
+                Math.PI / 6.0
+        );
     }
 }

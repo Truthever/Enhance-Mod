@@ -1,10 +1,11 @@
 package com.weaponhouse.enhance.network;
-import com.weaponhouse.enhance.client.gui.ReplaceScreen;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.screen.Screen;
+
 import net.minecraft.network.PacketBuffer;
 import net.minecraft.util.math.BlockPos;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.fml.network.NetworkEvent;
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -17,6 +18,15 @@ public class SessionStateSyncPacket {
         this.sessionPos = sessionPos;
         this.interactionStates = interactionStates;
         this.disconnectedPlayer = disconnectedPlayer;
+    }
+    public BlockPos getSessionPos() {
+        return sessionPos;
+    }
+    public Map<UUID, Boolean> getInteractionStates() {
+        return interactionStates;
+    }
+    public UUID getDisconnectedPlayer() {
+        return disconnectedPlayer;
     }
     public static void encode(SessionStateSyncPacket packet, PacketBuffer buffer) {
         buffer.writeBlockPos(packet.sessionPos);
@@ -41,15 +51,7 @@ public class SessionStateSyncPacket {
         return new SessionStateSyncPacket(pos, states, disconnected);
     }
     public static void handle(SessionStateSyncPacket packet, Supplier<NetworkEvent.Context> ctx) {
-        ctx.get().enqueueWork(() -> {
-            Minecraft.getInstance().enqueue(() -> {
-                Screen screen = Minecraft.getInstance().currentScreen;
-                if (screen instanceof ReplaceScreen) {
-                    ReplaceScreen replaceScreen = (ReplaceScreen) screen;
-                    replaceScreen.handleSessionStateUpdate(packet.interactionStates, packet.disconnectedPlayer);
-                }
-            });
-        });
+        ctx.get().enqueueWork(() -> DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> ClientPacketHandler.handleSessionStateSyncPacket(packet.getSessionPos(), packet.getInteractionStates(), packet.getDisconnectedPlayer())));
         ctx.get().setPacketHandled(true);
     }
 }

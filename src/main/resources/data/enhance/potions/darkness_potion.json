@@ -1,0 +1,9 @@
+{
+  "effects": [
+    {
+      "effect": "enhance:darkness",
+      "duration": 6000,
+      "amplifier": 0
+    }
+  ]
+}

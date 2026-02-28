@@ -4,18 +4,18 @@ import com.weaponhouse.enhance.effects.EffectRegistry;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.entity.projectile.AbstractArrowEntity;
+import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.potion.Effect;
 import net.minecraft.potion.EffectInstance;
-import net.minecraftforge.event.entity.ProjectileImpactEvent;
-import net.minecraftforge.event.entity.living.LivingEvent;
-import net.minecraftforge.event.entity.living.LivingAttackEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraft.entity.projectile.AbstractArrowEntity;
 import net.minecraft.util.math.EntityRayTraceResult;
 import net.minecraft.util.math.RayTraceResult;
-import net.minecraft.nbt.CompoundNBT;
 import net.minecraftforge.common.util.Constants;
+import net.minecraftforge.event.entity.ProjectileImpactEvent;
+import net.minecraftforge.event.entity.living.LivingAttackEvent;
+import net.minecraftforge.event.entity.living.LivingEvent;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.common.Mod;
 @Mod.EventBusSubscriber(modid = "enhance", bus = Mod.EventBusSubscriber.Bus.FORGE)
 public class AuraSkillHandler {
     private static final String BUFF_TAG = "WeaponHouseBuffs";
@@ -29,7 +29,7 @@ public class AuraSkillHandler {
         if (!(event.getSource().getImmediateSource() instanceof LivingEntity)) return;
         if (!(event.getEntityLiving() instanceof LivingEntity)) return;
         LivingEntity attacker = (LivingEntity) event.getSource().getImmediateSource();
-        LivingEntity target = (LivingEntity) event.getEntityLiving();
+        LivingEntity target = event.getEntityLiving();
         int auraLevel = getAuraLevel(attacker);
         if (auraLevel > 0) {
             applyAuraEffect(target, auraLevel);
@@ -59,9 +59,6 @@ public class AuraSkillHandler {
         if (!(event.getEntity() instanceof PlayerEntity)) return;
         PlayerEntity player = (PlayerEntity) event.getEntity();
         Effect auraEffect = EffectRegistry.AURA;
-        if (auraEffect == null) {
-            return;
-        }
         EffectInstance activeEffect = player.getActivePotionEffect(auraEffect);
         if (activeEffect != null) {
             player.setMotion(player.getMotion().x, 0, player.getMotion().z);
@@ -79,9 +76,6 @@ public class AuraSkillHandler {
     }
     private static void applyAuraEffect(LivingEntity target, int level) {
         Effect auraEffect = EffectRegistry.AURA;
-        if (auraEffect == null) {
-            return;
-        }
         int duration = BASE_DURATION + (level - 1) * DURATION_PER_LEVEL;
         target.removePotionEffect(auraEffect);
         target.addPotionEffect(new EffectInstance(

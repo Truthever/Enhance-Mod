@@ -1,0 +1,42 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "ABC",
+    "DEF",
+    "GHI"
+  ],
+  "key": {
+    "A": {
+      "item": "minecraft:crafting_table"
+    },
+    "B": {
+      "item": "minecraft:furnace"
+    },
+    "C": {
+      "item": "minecraft:chest"
+    },
+    "D": {
+      "item": "minecraft:enchanting_table"
+    },
+    "E": {
+      "item": "enhance:enhance_block"
+    },
+    "F": {
+      "item": "minecraft:anvil"
+    },
+    "G": {
+      "item": "minecraft:brewing_stand"
+    },
+    "H": {
+      "item": "minecraft:dispenser"
+    },
+    "I": {
+      "item": "minecraft:sticky_piston"
+    }
+  },
+  "result": {
+    "item": "enhance:alchemy_furnace",
+    "count": 1
+  },
+  "group": "enhance"
+}

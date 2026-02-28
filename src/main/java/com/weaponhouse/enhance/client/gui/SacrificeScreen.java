@@ -18,11 +18,10 @@ import net.minecraft.util.text.StringTextComponent;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.fml.common.Mod;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
-@Mod.EventBusSubscriber (modid = "enhance", value = Dist.CLIENT)
 @OnlyIn (Dist.CLIENT)
 public class SacrificeScreen extends Screen {
     private static final ResourceLocation TEXTURE = new ResourceLocation("enhance", "textures/gui/sacrifice.png");
@@ -50,7 +49,6 @@ public class SacrificeScreen extends Screen {
             {{8, 102}, {70, 121}}, {{105, 102}, {167, 121}},
             {{8, 126}, {70, 145}}, {{105, 126}, {167, 145}}
     };
-
     private static final int[][] BUTTON_COORDINATES = {
             {77, 27, 98, 48}, {172, 27, 193, 48},
             {77, 53, 98, 74}, {172, 53, 193, 74},
@@ -60,9 +58,7 @@ public class SacrificeScreen extends Screen {
     };
     private static final int HOVER_TEXTURE_X1 = 0;
     private static final int HOVER_TEXTURE_Y1 = 171;
-    private static final int HOVER_TEXTURE_X2 = 21;
-    private static final int HOVER_TEXTURE_Y2 = 192;
-    private boolean[] isButtonHovered = new boolean[10];
+    private final boolean[] isButtonHovered = new boolean[10];
     private static class BuffInfo {
         public String name;
         public String originalName;
@@ -80,12 +76,12 @@ public class SacrificeScreen extends Screen {
     public static final String KEY_NO_BUFF = "gui.enhance.sacrifice.no_buff";
     public static final String KEY_UNKNOWN_PLAYER = "gui.enhance.sacrifice.unknown_player";
     public static final String KEY_EXCEPTION_REMOVE = "gui.enhance.sacrifice.exception";
-    private List<BuffInfo> buffInfos = new ArrayList<>();
+
+    private final List<BuffInfo> buffInfos = new ArrayList<>();
+    @OnlyIn (Dist.CLIENT)
     public SacrificeScreen() {
         super(new StringTextComponent("Enhance Sacrifice"));
-        for (int i = 0; i < isButtonHovered.length; i++) {
-            isButtonHovered[i] = false;
-        }
+        Arrays.fill(isButtonHovered, false);
     }
     public void updateBuffs(List<String> buffs) {
         buffInfos.clear();
@@ -110,7 +106,9 @@ public class SacrificeScreen extends Screen {
         if (totalBuffs <= PAGE_SIZE) {
             return;
         }
-        this.minecraft.getTextureManager().bindTexture(TEXTURE);
+        if (this.minecraft != null) {
+            this.minecraft.getTextureManager().bindTexture(TEXTURE);
+        }
         if (isLeftArrowEnabled) {
             int screenX = guiLeft + LEFT_ARROW_SCREEN[0];
             int screenY = guiTop + LEFT_ARROW_SCREEN[1];
@@ -132,7 +130,7 @@ public class SacrificeScreen extends Screen {
     }
     private String[] parseBuff(String buffString) {
         String[] parts = buffString.split("Lv.");
-        String originalName = "";
+        String originalName;
         String level = "";
         if (parts.length >= 1) {
             originalName = parts[0].trim();
@@ -164,7 +162,7 @@ public class SacrificeScreen extends Screen {
                     return 0xFFFF00;
                 }
             }
-        } catch (NumberFormatException e) {
+        } catch (NumberFormatException ignored) {
         }
         return 0xFFE900;
     }
@@ -174,7 +172,9 @@ public class SacrificeScreen extends Screen {
         super.render(matrixStack, mouseX, mouseY, partialTicks);
         int guiLeft = (this.width - DISPLAY_WIDTH) / 2;
         int guiTop = (this.height - DISPLAY_HEIGHT) / 2;
-        this.minecraft.getTextureManager().bindTexture(TEXTURE);
+        if (this.minecraft != null) {
+            this.minecraft.getTextureManager().bindTexture(TEXTURE);
+        }
         this.blit(matrixStack, guiLeft, guiTop, 0, 0, DISPLAY_WIDTH, DISPLAY_HEIGHT);
         renderText(matrixStack, guiLeft, guiTop);
         renderBuffInfo(matrixStack, guiLeft, guiTop);
@@ -188,7 +188,9 @@ public class SacrificeScreen extends Screen {
         }
     }
     private void renderAllButtonHoverTextures(MatrixStack matrixStack, int guiLeft, int guiTop) {
-        this.minecraft.getTextureManager().bindTexture(TEXTURE);
+        if (this.minecraft != null) {
+            this.minecraft.getTextureManager().bindTexture(TEXTURE);
+        }
         for (int i = 0; i < BUTTON_COORDINATES.length; i++) {
             if (isButtonHovered[i] && hasBuffAtPosition(i)) {
                 int[] btnCoords = BUTTON_COORDINATES[i];
@@ -196,7 +198,6 @@ public class SacrificeScreen extends Screen {
                 int btnY1 = btnCoords[1];
                 int btnWidth = btnCoords[2] - btnCoords[0];
                 int btnHeight = btnCoords[3] - btnCoords[1];
-                // 绘制悬停纹理到按钮位置
                 this.blit(matrixStack,
                         guiLeft + btnX1, guiTop + btnY1,
                         HOVER_TEXTURE_X1, HOVER_TEXTURE_Y1,
@@ -204,11 +205,15 @@ public class SacrificeScreen extends Screen {
             }
         }
     }
-    private boolean hasBuffAtPosition(int index) {
-        if (index < 0 || index >= buffInfos.size()) {
+    private boolean hasBuffAtPosition(int buttonIndex) {
+        int startIndex = (currentPage - 1) * PAGE_SIZE;
+        int actualIndex = startIndex + buttonIndex;
+
+        if (actualIndex < 0 || actualIndex >= buffInfos.size()) {
             return false;
         }
-        BuffInfo info = buffInfos.get(index);
+
+        BuffInfo info = buffInfos.get(actualIndex);
         return !info.originalName.isEmpty() && !info.name.equals(I18n.format(KEY_NO_BUFF));
     }
     private void renderText(MatrixStack matrixStack, int guiLeft, int guiTop) {
@@ -255,17 +260,17 @@ public class SacrificeScreen extends Screen {
         int buffAreaTop = guiTop + yOffset;
         matrixStack.push();
         matrixStack.scale(0.8f, 0.8f, 0.8f);
-        float scaledLeft = (buffAreaLeft + width / 2) / 0.8f;
+        float scaledLeft = (buffAreaLeft + (float) width / 2) / 0.8f;
         float scaledTop = buffAreaTop / 0.8f;
         int nameWidth = this.font.getStringWidth(name);
         int nameX = (int) (scaledLeft - nameWidth * 0.8f / 2);
-        int nameY = (int) (scaledTop + (height / 2 - this.font.FONT_HEIGHT * 0.8f));
+        int nameY = (int) (scaledTop + ((float) height / 2 - this.font.FONT_HEIGHT * 0.8f));
         this.font.drawString(matrixStack, name, nameX, nameY, color);
         if (!level.isEmpty()) {
             String levelText = "Lv." + level;
             int levelWidth = this.font.getStringWidth(levelText);
             int levelX = (int) (scaledLeft - levelWidth * 0.8f / 2);
-            int levelY = (int) (scaledTop + (height / 2 + 4));
+            int levelY = (int) (scaledTop + ((float) height / 2 + 4));
             this.font.drawString(matrixStack, levelText, levelX, levelY, color);
         }
         matrixStack.pop();
@@ -348,16 +353,19 @@ public class SacrificeScreen extends Screen {
         }
         return super.mouseClicked(mouseX, mouseY, button);
     }
-    private void sacrificeBuffAtPosition(int index) {
-        if (index < 0 || index >= buffInfos.size()) {
+    private void sacrificeBuffAtPosition(int buttonIndex) {
+        int startIndex = (currentPage - 1) * PAGE_SIZE;
+        int actualIndex = startIndex + buttonIndex;
+        if (actualIndex < 0 || actualIndex >= buffInfos.size()) {
             return;
         }
-        BuffInfo info = buffInfos.get(index);
+        BuffInfo info = buffInfos.get(actualIndex);
         if (info.originalName.isEmpty() || info.name.equals(I18n.format(KEY_NO_BUFF))) {
             return;
         }
         PlayerEntity player = Minecraft.getInstance().player;
         if (player == null) return;
+
         try {
             int buffLevel = info.level.isEmpty() ? 1 : Integer.parseInt(info.level);
             String buffId = info.originalName;
@@ -375,7 +383,6 @@ public class SacrificeScreen extends Screen {
             );
         }
     }
-
     private void requestBuffUpdate() {
         Enhance.sendToServer(new RequestBuffPacket());
     }

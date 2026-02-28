@@ -1,7 +1,7 @@
 package com.weaponhouse.enhance.enhances;
 
-import net.minecraft.entity.LivingEntity;
 import com.weaponhouse.enhance.effects.EffectRegistry;
+import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.ai.attributes.Attributes;
 import net.minecraft.entity.ai.attributes.ModifiableAttributeInstance;
 import net.minecraft.entity.player.PlayerEntity;
@@ -15,18 +15,15 @@ import net.minecraft.world.World;
 import net.minecraft.world.biome.Biome;
 import net.minecraft.world.server.ServerWorld;
 import net.minecraftforge.event.entity.living.LivingEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-@Mod.EventBusSubscriber(modid = "enhance")
 public class HarmonyHandler {
     private static final String BUFF_TAG = "WeaponHouseBuffs";
     private static final String HARMONY_TAG = "harmony";
     private static final Map<LivingEntity, Long> lastEffectTime = new ConcurrentHashMap<>();
     private static final Map<LivingEntity, Integer> particleCounter = new ConcurrentHashMap<>();
-    @SubscribeEvent
     public static void onEntityUpdate(LivingEvent.LivingUpdateEvent event) {
         LivingEntity entity = event.getEntityLiving();
         World world = entity.world;
@@ -102,19 +99,17 @@ public class HarmonyHandler {
         }
     }
     private static void applySwampEffect(LivingEntity entity, int level) {
-        if (EffectRegistry.SWAMP != null) {
-            int amplifier = 0;
-            EffectInstance swampEffect = new EffectInstance(
-                    EffectRegistry.SWAMP,
-                    100,
-                    amplifier,
-                    false,
-                    true
-            );
-            EffectInstance current = entity.getActivePotionEffect(EffectRegistry.SWAMP);
-            if (current == null || current.getDuration() < 60) {
-                entity.addPotionEffect(swampEffect);
-            }
+        int amplifier = 0;
+        EffectInstance swampEffect = new EffectInstance(
+                EffectRegistry.SWAMP,
+                100,
+                amplifier,
+                false,
+                true
+        );
+        EffectInstance current = entity.getActivePotionEffect(EffectRegistry.SWAMP);
+        if (current == null || current.getDuration() < 60) {
+            entity.addPotionEffect(swampEffect);
         }
         spawnSwampParticles(entity, level);
     }
@@ -180,17 +175,14 @@ public class HarmonyHandler {
                 }
             }
         }
-        int reducePerSecond = level;
         int triggerInterval = 3;
-        int totalReduceTicks = reducePerSecond * triggerInterval * 20;
+        int totalReduceTicks = level * triggerInterval * 20;
         for (EffectInstance activeEffect : new ArrayList<>(entity.getActivePotionEffects())) {
             if (activeEffect.getPotion() == EffectRegistry.FROST) {
                 int currentDuration = activeEffect.getDuration();
                 int newDuration = currentDuration - totalReduceTicks;
-                if (newDuration <= 0) {
-                    entity.removePotionEffect(EffectRegistry.FROST);
-                } else {
-                    entity.removePotionEffect(EffectRegistry.FROST);
+                entity.removePotionEffect(EffectRegistry.FROST);
+                if (newDuration > 0) {
                     entity.addPotionEffect(new EffectInstance(
                             EffectRegistry.FROST,
                             newDuration,
@@ -440,10 +432,7 @@ public class HarmonyHandler {
     private static void applyMountainEffect(LivingEntity entity, int level) {
         CompoundNBT nbt = entity.getPersistentData();
         if (!nbt.contains("naturalArmor")) {
-            ModifiableAttributeInstance armorAttr = entity.getAttribute(Attributes.ARMOR);
-            if (armorAttr != null) {
-                nbt.putDouble("naturalArmor", armorAttr.getBaseValue());
-            }
+            nbt.putDouble("naturalArmor", 0.0D);
         }
         int amplifier = level - 1;
         EffectInstance effect = new EffectInstance(
@@ -459,7 +448,6 @@ public class HarmonyHandler {
         }
         spawnMountainParticles(entity, level);
     }
-
     private static void spawnHealingParticles(LivingEntity entity) {
         if (!entity.world.isRemote()) {
             ServerWorld serverWorld = (ServerWorld) entity.world;
